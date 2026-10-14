@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
+import { getOrCreateProfileForSupabaseUser } from "@/lib/profile";
 
 // Create Supabase client for server-side auth operations
 export async function createClient() {
@@ -63,7 +64,10 @@ export async function getUser() {
   return user;
 }
 
-// Get the current user's profile from Prisma
+// Get the current user's profile from Prisma, creating it from auth metadata
+// if the row is missing. Layouts redirect to /login on a null profile while the
+// middleware sends signed-in users away from /login, so a signed-in user with
+// no profile row would otherwise be stuck in a redirect loop.
 export async function getProfile() {
   const user = await getUser();
 
@@ -73,7 +77,7 @@ export async function getProfile() {
     where: { id: user.id },
   });
 
-  return profile;
+  return profile ?? getOrCreateProfileForSupabaseUser(user);
 }
 
 // Get profile with additional data
