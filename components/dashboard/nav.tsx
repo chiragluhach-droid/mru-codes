@@ -21,12 +21,14 @@ import {
   Code2,
   Award,
   MessageSquare,
+  GitBranch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const studentNav = [
   { href: "/student/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/student/learn", label: "Learn", icon: BookOpen },
+  { href: "/student/dsa-visualizer", label: "DSA Visualizer", icon: GitBranch },
   { href: "/student/ide", label: "IDE", icon: Code2 },
   { href: "/student/quiz/join", label: "Join Quiz", icon: Zap },
   { href: "/student/study-recommendations", label: "Study Tips", icon: Lightbulb },

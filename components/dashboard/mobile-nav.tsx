@@ -20,12 +20,14 @@ import {
   ChevronRight,
   Code2,
   MessageSquare,
+  GitBranch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const studentNav = [
   { href: "/student/dashboard", label: "Home", icon: LayoutDashboard },
   { href: "/student/learn", label: "Learn", icon: BookOpen },
+  { href: "/student/dsa-visualizer", label: "Visualizer", icon: GitBranch },
   { href: "/student/ide", label: "IDE", icon: Code2 },
   { href: "/student/quiz/join", label: "Quiz", icon: Zap },
   { href: "/student/study-recommendations", label: "Tips", icon: Lightbulb },
