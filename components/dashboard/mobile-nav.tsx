@@ -22,6 +22,7 @@ import {
   MessageSquare,
   Network,
   Eye,
+  PlusCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
