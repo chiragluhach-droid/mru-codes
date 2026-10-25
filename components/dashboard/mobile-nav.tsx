@@ -20,34 +20,29 @@ import {
   ChevronRight,
   Code2,
   MessageSquare,
+  Network,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const studentNav = [
-  { href: "/student/dashboard", label: "Home", icon: LayoutDashboard },
-  { href: "/student/learn", label: "Learn", icon: BookOpen },
-  { href: "/student/ide", label: "IDE", icon: Code2 },
-  { href: "/student/quiz/join", label: "Quiz", icon: Zap },
-  { href: "/student/study-recommendations", label: "Tips", icon: Lightbulb },
-  { href: "/student/quiz-history", label: "History", icon: Clock },
-  { href: "/student/assignments", label: "Tasks", icon: FileText },
-  { href: "/student/discussions", label: "Discuss", icon: MessageSquare },
-  { href: "/student/performance", label: "Performance", icon: BarChart3 },
-  { href: "/student/leaderboard", label: "Rank", icon: Trophy },
+  { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+  { href: "/dashboard/learn", label: "Learn", icon: BookOpen },
+  { href: "/dashboard/dsa-visualizer", label: "DSA", icon: Network },
+  { href: "/dashboard/code-visualizer", label: "Code", icon: Eye },
+  { href: "/dashboard/quiz/join", label: "Quiz", icon: Zap },
+  { href: "/dashboard/quiz-history", label: "History", icon: Clock },
+  { href: "/dashboard/leaderboard", label: "Rank", icon: Trophy },
+  { href: "/dashboard/profile", label: "Profile", icon: Users },
 ];
 
 const teacherNav = [
-  { href: "/teacher/dashboard", label: "Home", icon: LayoutDashboard },
-  { href: "/teacher/quizzes", label: "Quizzes", icon: Zap },
-  { href: "/teacher/quizzes/create", label: "Create", icon: Zap },
-  { href: "/teacher/question-bank", label: "Bank", icon: Database },
-  { href: "/teacher/ide", label: "IDE", icon: Code2 },
-  { href: "/teacher/cheating-detection", label: "Security", icon: Shield },
-  { href: "/teacher/assignments", label: "Tasks", icon: FileText },
-  { href: "/teacher/discussions", label: "Discuss", icon: MessageSquare },
-  { href: "/teacher/performance", label: "Students", icon: Users },
-  { href: "/teacher/export-reports", label: "Export", icon: FileSpreadsheet },
-  { href: "/teacher/leaderboard", label: "Rank", icon: Trophy },
+  { href: "/dashboard", label: "Home", icon: LayoutDashboard },
+  { href: "/dashboard/learn", label: "Learn", icon: BookOpen },
+  { href: "/dashboard/quiz/join", label: "Quiz", icon: Zap },
+  { href: "/dashboard/quiz-history", label: "History", icon: Clock },
+  { href: "/dashboard/leaderboard", label: "Rank", icon: Trophy },
+  { href: "/dashboard/profile", label: "Profile", icon: Users },
 ];
 
 export function MobileNav({ role }: { role: "student" | "teacher" }) {
