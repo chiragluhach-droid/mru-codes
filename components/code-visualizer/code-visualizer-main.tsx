@@ -22,7 +22,7 @@ export function CodeVisualizerMain() {
   ];
 
   return (
-    <div className="h-full flex flex-col space-y-4">
+    <div className="min-h-screen flex flex-col space-y-4 pb-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Code Visualizer</h1>
         <p className="text-muted-foreground mt-2">
@@ -30,8 +30,8 @@ export function CodeVisualizerMain() {
         </p>
       </div>
 
-      <Card className="flex-1 overflow-hidden">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+      <Card className="flex-1">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col">
           <div className="border-b px-6 pt-4">
             <TabsList className="w-full justify-start h-auto p-0 bg-transparent">
               {tabs.map((tab) => {
@@ -50,20 +50,20 @@ export function CodeVisualizerMain() {
             </TabsList>
           </div>
 
-          <div className="flex-1 overflow-hidden">
-            <TabsContent value="recursion" className="h-full m-0 p-6">
+          <div className="overflow-auto">
+            <TabsContent value="recursion" className="m-0 p-6">
               <RecursionVisualizer />
             </TabsContent>
-            <TabsContent value="loops" className="h-full m-0 p-6">
+            <TabsContent value="loops" className="m-0 p-6">
               <LoopsVisualizer />
             </TabsContent>
-            <TabsContent value="functions" className="h-full m-0 p-6">
+            <TabsContent value="functions" className="m-0 p-6">
               <FunctionsVisualizer />
             </TabsContent>
-            <TabsContent value="arrays" className="h-full m-0 p-6">
+            <TabsContent value="arrays" className="m-0 p-6">
               <ArraysVisualizer />
             </TabsContent>
-            <TabsContent value="conditionals" className="h-full m-0 p-6">
+            <TabsContent value="conditionals" className="m-0 p-6">
               <ConditionalsVisualizer />
             </TabsContent>
           </div>

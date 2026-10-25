@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, RotateCcw, Play, Pause, SkipForward, SkipBack, ArrowRight } from "lucide-react";
+import { Plus, RotateCcw, Play, Pause, SkipForward, SkipBack, ArrowRight } from "lucide-react";
 import { CodeDisplay } from "./code-display";
 import { ComplexityDisplay } from "./complexity-display";
 import { toast } from "react-hot-toast";
@@ -159,7 +159,7 @@ export function LinkedListVisualizer() {
     
     setList(newList);
     setNextId(nextId + 1);
-    addStep("insertBegin", newList, `Insert ${value} at the beginning. New head = ${value}`, [14, 15, 16, 17], [0]);
+    addStep("insertBegin", newList, `Insert ${value} at the beginning. New head points to ${value}`, [14, 15, 16, 17], [0]);
     setCurrentStep((prev) => prev + 1);
     setInputValue("");
   };
@@ -179,7 +179,7 @@ export function LinkedListVisualizer() {
     addStep(
       "insertEnd",
       newList,
-      list.length === 0 ? `Insert ${value} as the first node` : `Insert ${value} at the end. Traversed to tail.`,
+      list.length === 0 ? `Insert ${value} as the first node` : `Insert ${value} at the end. Traversed to tail node.`,
       [20, 21, 28, 29, 30, 31, 32],
       [newList.length - 1]
     );
@@ -207,7 +207,7 @@ export function LinkedListVisualizer() {
     
     setList(newList);
     setNextId(nextId + 1);
-    addStep("insertAt", newList, `Insert ${value} at position ${pos}`, [35, 36, 51, 52], [pos]);
+    addStep("insertAt", newList, `Insert ${value} at position ${pos}. Traversed ${pos} nodes.`, [35, 36, 51, 52], [pos]);
     setCurrentStep((prev) => prev + 1);
     setInputValue("");
   };
@@ -224,7 +224,7 @@ export function LinkedListVisualizer() {
     const newList = list.filter((_, index) => index !== pos);
     
     setList(newList);
-    addStep("deleteAt", newList, `Delete node at position ${pos} (value = ${deletedValue})`, [55, 56, 70, 71], []);
+    addStep("deleteAt", newList, `Delete node at position ${pos} (value = ${deletedValue}). Adjusted pointers.`, [55, 56, 70, 71], []);
     setCurrentStep((prev) => prev + 1);
   };
 
@@ -284,164 +284,241 @@ export function LinkedListVisualizer() {
   const currentStepData = currentStep >= 0 && currentStep < steps.length ? steps[currentStep] : null;
 
   return (
-    <div className="h-full flex flex-col lg:flex-row gap-6">
-      <div className="flex-1 flex flex-col space-y-4">
-        <Card className="p-4 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Operation</label>
-              <Select value={operation} onValueChange={(v: any) => setOperation(v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="insertBegin">Insert at Beginning</SelectItem>
-                  <SelectItem value="insertEnd">Insert at End</SelectItem>
-                  <SelectItem value="insertAt">Insert at Position</SelectItem>
-                  <SelectItem value="deleteAt">Delete at Position</SelectItem>
-                </SelectContent>
-              </Select>
+    <div className="h-full flex flex-col gap-4 overflow-y-auto pb-4">
+      {/* TOP ROW: Controls (Left) + Code & Live Execution (Right) */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        
+        {/* LEFT: Controls + Visualization */}
+        <div className="lg:w-[44%] flex flex-col gap-4">
+          {/* Controls Card */}
+          <Card className="p-4 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Operation</label>
+                <Select value={operation} onValueChange={(v: any) => setOperation(v)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="insertBegin">Insert at Beginning</SelectItem>
+                    <SelectItem value="insertEnd">Insert at End</SelectItem>
+                    <SelectItem value="insertAt">Insert at Position</SelectItem>
+                    <SelectItem value="deleteAt">Delete at Position</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {operation !== "deleteAt" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Value</label>
+                  <Input
+                    type="number"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder="Enter value"
+                    className="h-9"
+                  />
+                </div>
+              )}
+
+              {(operation === "insertAt" || operation === "deleteAt") && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Position</label>
+                  <Input
+                    type="number"
+                    value={position}
+                    onChange={(e) => setPosition(e.target.value)}
+                    placeholder="Position"
+                    className="h-9"
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Speed: {speed}ms</label>
+                <Slider value={[speed]} onValueChange={([v]) => setSpeed(v)} min={200} max={1500} step={100} />
+              </div>
             </div>
 
-            {operation !== "deleteAt" && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Value</label>
-                <Input
-                  type="number"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Enter value"
-                />
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleExecute} variant="default" size="sm">
+                <Plus className="w-4 h-4 mr-1" />
+                Execute
+              </Button>
+              <Button onClick={handlePlayPause} variant="outline" size="sm" disabled={steps.length === 0}>
+                {isPlaying ? <Pause className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
+                {isPlaying ? "Pause" : "Replay"}
+              </Button>
+              <Button onClick={handlePrevious} variant="outline" size="sm" disabled={currentStep <= 0}>
+                <SkipBack className="w-4 h-4" />
+              </Button>
+              <Button onClick={handleNext} variant="outline" size="sm" disabled={currentStep >= steps.length - 1}>
+                <SkipForward className="w-4 h-4" />
+              </Button>
+              <Button onClick={handleReset} variant="outline" size="sm">
+                <RotateCcw className="w-4 h-4 mr-1" />
+                Reset
+              </Button>
+            </div>
+
+            <div className="text-sm">
+              <span className="text-muted-foreground">Nodes: </span>
+              <span className="font-semibold">{list.length}</span>
+            </div>
+          </Card>
+
+          {/* Visualization */}
+          <Card className="flex-1 min-h-[350px] p-6 flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted/20 overflow-x-auto">
+            <div className="w-full min-w-max pb-4">
+              {list.length === 0 ? (
+                <div className="flex items-center justify-center h-32 border-4 border-dashed border-muted-foreground/30 rounded-lg">
+                  <span className="text-muted-foreground">Linked List is empty</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 justify-center">
+                  {/* HEAD label */}
+                  <div className="flex flex-col items-center mr-3">
+                    <div className="text-xs font-bold text-primary mb-2">HEAD</div>
+                    <div className="text-xl">→</div>
+                  </div>
+
+                  {list.map((node, index) => {
+                    const isHighlighted = currentStepData?.highlightNodes?.includes(index);
+                    
+                    return (
+                      <div key={node.id} className="flex items-center">
+                        {/* Node */}
+                        <div
+                          className={`flex items-center border-4 rounded-lg transition-all duration-300 ${
+                            isHighlighted
+                              ? "border-primary bg-primary text-primary-foreground scale-105 shadow-lg shadow-primary/50"
+                              : "border-muted-foreground/30 bg-muted/20"
+                          }`}
+                        >
+                          <div className="px-4 py-3">
+                            <div className="text-xs text-muted-foreground mb-1">Data</div>
+                            <div className="text-xl font-bold">{node.value}</div>
+                          </div>
+                          <div className="border-l-4 border-muted-foreground/30 px-3 py-3">
+                            <div className="text-xs text-muted-foreground mb-1">Next</div>
+                            <div className="text-lg">→</div>
+                          </div>
+                        </div>
+
+                        {/* Arrow to next node or NULL */}
+                        {index < list.length - 1 ? (
+                          <div className="px-1">
+                            <ArrowRight className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                        ) : (
+                          <div className="ml-3 px-3 py-1 border-2 border-dashed border-muted-foreground/30 rounded-md">
+                            <span className="text-sm text-muted-foreground">NULL</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {currentStepData && (
+              <div className="mt-4 text-center">
+                <div className="inline-block bg-primary/10 text-primary px-3 py-1 rounded-md text-sm font-medium">
+                  Step {currentStep + 1} of {steps.length}
+                </div>
               </div>
             )}
 
-            {(operation === "insertAt" || operation === "deleteAt") && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Position</label>
-                <Input
-                  type="number"
-                  value={position}
-                  onChange={(e) => setPosition(e.target.value)}
-                  placeholder="Position"
-                />
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Speed: {speed}ms</label>
-              <Slider value={[speed]} onValueChange={([v]) => setSpeed(v)} min={200} max={1500} step={100} />
+            <div className="mt-4 text-xs text-muted-foreground text-center">
+              <p>Each node contains data and a pointer to the next node</p>
             </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={handleExecute} variant="default" size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Execute
-            </Button>
-            <Button onClick={handlePlayPause} variant="outline" size="sm" disabled={steps.length === 0}>
-              {isPlaying ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-              {isPlaying ? "Pause" : "Replay"}
-            </Button>
-            <Button onClick={handlePrevious} variant="outline" size="sm" disabled={currentStep <= 0}>
-              <SkipBack className="w-4 h-4" />
-            </Button>
-            <Button onClick={handleNext} variant="outline" size="sm" disabled={currentStep >= steps.length - 1}>
-              <SkipForward className="w-4 h-4" />
-            </Button>
-            <Button onClick={handleReset} variant="outline" size="sm">
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Reset
-            </Button>
-          </div>
-
-          <div className="text-sm">
-            <span className="text-muted-foreground">Nodes: </span>
-            <span className="font-semibold">{list.length}</span>
-          </div>
-        </Card>
-
-        <Card className="flex-1 p-6 flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted/20">
-          <div className="w-full overflow-x-auto pb-4">
-            {list.length === 0 ? (
-              <div className="flex items-center justify-center h-40 border-4 border-dashed border-muted-foreground/30 rounded-lg">
-                <span className="text-muted-foreground">Linked List is empty</span>
+          </Card>
+          {/* Complexity Box Below Visualization */}
+          <Card className="p-3 bg-muted/20 border">
+            <div className="text-sm font-semibold mb-2">Complexity</div>
+            <div className="space-y-1 text-xs">
+              <div>
+                <span className="text-muted-foreground">Insert/Delete (Begin): </span>
+                <span className="font-mono font-semibold text-green-600 dark:text-green-400">O(1)</span>
               </div>
-            ) : (
-              <div className="flex items-center gap-2 min-w-max justify-center">
-                {/* HEAD label */}
-                <div className="flex flex-col items-center mr-4">
-                  <div className="text-sm font-bold text-primary mb-2">HEAD</div>
-                  <div className="text-2xl">→</div>
+              <div>
+                <span className="text-muted-foreground">Insert/Delete (End/At): </span>
+                <span className="font-mono font-semibold text-yellow-600 dark:text-yellow-400">O(n)</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Space: </span>
+                <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">O(1)</span>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* RIGHT: Code Editor + Live Execution */}
+        <div className="lg:w-[56%] flex flex-col gap-4">
+          {/* Code Display */}
+          <div className="flex-1">
+            <CodeDisplay code={linkedListCode} language="java" highlightLines={currentStepData?.highlightLines || []} />
+          </div>
+
+          {/* Live Execution Box */}
+          <Card className="p-4 bg-muted/30 border-2">
+            <div className="flex items-center gap-2 font-semibold mb-3 pb-2 border-b">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+              <span className="text-lg">Live Execution</span>
+            </div>
+            
+            {currentStepData ? (
+              <div className="space-y-3">
+                <div>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase mb-1">
+                    Current Operation
+                  </div>
+                  <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                    <p className="text-sm font-medium">{currentStepData.description}</p>
+                  </div>
                 </div>
 
-                {list.map((node, index) => {
-                  const isHighlighted = currentStepData?.highlightNodes?.includes(index);
-                  
-                  return (
-                    <div key={node.id} className="flex items-center">
-                      {/* Node */}
-                      <div
-                        className={`flex items-center border-4 rounded-lg transition-all duration-300 ${
-                          isHighlighted
-                            ? "border-primary bg-primary text-primary-foreground scale-110 shadow-lg shadow-primary/50"
-                            : "border-muted-foreground/30 bg-muted/20"
-                        }`}
-                      >
-                        <div className="px-6 py-4">
-                          <div className="text-xs text-muted-foreground mb-1">Data</div>
-                          <div className="text-2xl font-bold">{node.value}</div>
-                        </div>
-                        <div className="border-l-4 border-muted-foreground/30 px-4 py-4">
-                          <div className="text-xs text-muted-foreground mb-1">Next</div>
-                          <div className="text-xl">→</div>
-                        </div>
-                      </div>
-
-                      {/* Arrow to next node or NULL */}
-                      {index < list.length - 1 ? (
-                        <div className="px-2">
-                          <ArrowRight className="w-6 h-6 text-muted-foreground" />
-                        </div>
-                      ) : (
-                        <div className="ml-4 px-4 py-2 border-2 border-dashed border-muted-foreground/30 rounded-md">
-                          <span className="text-muted-foreground">NULL</span>
-                        </div>
-                      )}
+                {currentStepData.highlightLines.length > 0 && (
+                  <div>
+                    <div className="text-xs font-semibold text-muted-foreground uppercase mb-1">
+                      Executing Line
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                    <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                      <p className="text-sm font-mono font-semibold">
+                        Line {currentStepData.highlightLines.join(", ")}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
-          {currentStepData && (
-            <div className="mt-6 text-center">
-              <div className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-md mb-2">
-                <p className="text-sm font-medium">
-                  Step {currentStep + 1} of {steps.length}
+                <div>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase mb-1">
+                    List State
+                  </div>
+                  <div className="p-2 rounded-lg bg-muted/50 border">
+                    <div className="space-y-1">
+                      <div className="text-sm">
+                        <span className="text-muted-foreground">Operation: </span>
+                        <span className="font-mono font-bold capitalize">{currentStepData.operation.replace(/([A-Z])/g, ' $1').trim()}</span>
+                      </div>
+                      <div className="text-sm">
+                        <span className="text-muted-foreground">Nodes: </span>
+                        <span className="font-mono font-bold">{list.length}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-sm text-muted-foreground">
+                  Execute operations to see live execution
                 </p>
               </div>
-              <p className="text-muted-foreground max-w-2xl">{currentStepData.description}</p>
-            </div>
-          )}
-
-          <div className="mt-6 text-sm text-muted-foreground">
-            <p>Each node contains data and a reference (pointer) to the next node</p>
-          </div>
-        </Card>
-      </div>
-
-      <div className="lg:w-[500px] flex flex-col gap-4">
-        <CodeDisplay code={linkedListCode} language="java" highlightLines={currentStepData?.highlightLines || []} />
-        <ComplexityDisplay
-          timeComplexity={{
-            best: "O(1)",
-            average: "O(n)",
-            worst: "O(n)",
-          }}
-          spaceComplexity="O(1)"
-          description="Insert/Delete at beginning: O(1). Insert/Delete at end or specific position: O(n) due to traversal. Space complexity is O(1) for operations (excluding storage)."
-        />
+            )}
+          </Card>
+        </div>
       </div>
     </div>
   );

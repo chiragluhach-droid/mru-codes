@@ -22,6 +22,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudentPerformanceDashboard } from "@/components/dashboard/student-performance-dashboard";
+import { HackerRankStatsCard } from "@/components/dashboard/hackerrank-stats-card";
 import { formatDepartmentSection } from "@/lib/departments";
 
 export default async function StudentDashboardPage() {
@@ -199,6 +200,9 @@ export default async function StudentDashboardPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* HackerRank Stats Card */}
+          <HackerRankStatsCard />
 
           {/* Learning Progress */}
           <Card className="border-border/50">

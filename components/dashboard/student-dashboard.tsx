@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { formatDepartmentSection } from "@/lib/departments";
+import { HackerRankStatsCard } from "./hackerrank-stats-card";
 
 interface Profile {
   id: string;
@@ -72,7 +73,7 @@ export function StudentDashboard({ profile }: { profile: Profile }) {
         </Card>
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions & HackerRank Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
@@ -125,6 +126,16 @@ export function StudentDashboard({ profile }: { profile: Profile }) {
           </CardContent>
         </Card>
       </div>
+
+      {/* HackerRank Stats Card - TEST */}
+      <Card className="border-4 border-red-500 bg-red-500/10">
+        <CardHeader>
+          <CardTitle>🔴 TEST: HackerRank Card Should Appear Here</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-lg font-bold">If you see this red card, the component is rendering!</p>
+        </CardContent>
+      </Card>
 
       {/* Progress */}
       <Card>

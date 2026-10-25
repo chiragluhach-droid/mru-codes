@@ -170,50 +170,64 @@ export function SortingVisualizer() {
   const maxValue = Math.max(...displayArray);
 
   return (
-    <div className="h-full flex flex-col lg:flex-row gap-6">
-      {/* Left Panel - Controls and Visualization */}
-      <div className="flex-1 flex flex-col space-y-4">
-        {/* Controls */}
-        <Card className="p-4 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Algorithm</label>
-              <Select value={algorithm} onValueChange={(v) => setAlgorithm(v as SortingAlgorithm)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bubble">Bubble Sort</SelectItem>
-                  <SelectItem value="selection">Selection Sort</SelectItem>
-                  <SelectItem value="insertion">Insertion Sort</SelectItem>
-                  <SelectItem value="merge">Merge Sort</SelectItem>
-                  <SelectItem value="quick">Quick Sort</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+    <div className="h-full flex flex-col gap-4 overflow-y-auto pb-4">
+      {/* TOP ROW: Controls (Left) + Code & Live Execution (Right) */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        
+        {/* LEFT: Controls + Visualization */}
+        <div className="lg:w-[44%] flex flex-col gap-4">
+          {/* Controls Card */}
+          <Card className="p-4 space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Algorithm</label>
+                <Select value={algorithm} onValueChange={(v) => setAlgorithm(v as SortingAlgorithm)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bubble">Bubble Sort</SelectItem>
+                    <SelectItem value="selection">Selection Sort</SelectItem>
+                    <SelectItem value="insertion">Insertion Sort</SelectItem>
+                    <SelectItem value="merge">Merge Sort</SelectItem>
+                    <SelectItem value="quick">Quick Sort</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Input Type</label>
-              <Select value={inputMode} onValueChange={setInputMode}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="standard">Standard</SelectItem>
-                  <SelectItem value="small">Small</SelectItem>
-                  <SelectItem value="reverse">Reverse Sorted</SelectItem>
-                  <SelectItem value="sorted">Already Sorted</SelectItem>
-                  <SelectItem value="nearly">Nearly Sorted</SelectItem>
-                  <SelectItem value="equal">All Equal</SelectItem>
-                  <SelectItem value="random">Random</SelectItem>
-                  <SelectItem value="custom">Custom</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Input Type</label>
+                <Select value={inputMode} onValueChange={setInputMode}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="standard">Standard</SelectItem>
+                    <SelectItem value="small">Small</SelectItem>
+                    <SelectItem value="reverse">Reverse</SelectItem>
+                    <SelectItem value="sorted">Sorted</SelectItem>
+                    <SelectItem value="random">Random</SelectItem>
+                    <SelectItem value="custom">Custom</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Speed: {speed}ms</label>
+                <Slider
+                  value={[speed]}
+                  onValueChange={([v]) => setSpeed(v)}
+                  min={100}
+                  max={2000}
+                  step={100}
+                  className="w-full"
+                />
+              </div>
             </div>
 
             {inputMode === "custom" && (
-              <div className="space-y-2 col-span-full">
-                <label className="text-sm font-medium">Custom Input (comma-separated)</label>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Custom Input</label>
                 <Input
                   placeholder="e.g., 64, 34, 25, 12, 22"
                   value={customInput}
@@ -222,147 +236,187 @@ export function SortingVisualizer() {
               </div>
             )}
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Speed: {speed}ms</label>
-              <Slider
-                value={[speed]}
-                onValueChange={([v]) => setSpeed(v)}
-                min={100}
-                max={2000}
-                step={100}
-                className="w-full"
-              />
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => generateArray(inputMode)} variant="outline" size="sm">
+                <Shuffle className="w-4 h-4 mr-2" />
+                Generate Array
+              </Button>
+              <Button onClick={visualize} variant="default" size="sm">
+                Visualize
+              </Button>
+              <Button onClick={handlePlayPause} variant="outline" size="sm" disabled={steps.length === 0}>
+                {isPlaying ? <Pause className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
+                {isPlaying ? "Pause" : "Play"}
+              </Button>
+              <Button onClick={handlePrevious} variant="outline" size="sm" disabled={currentStep <= 0}>
+                <SkipBack className="w-4 h-4" />
+              </Button>
+              <Button onClick={handleNext} variant="outline" size="sm" disabled={currentStep >= steps.length - 1}>
+                <SkipForward className="w-4 h-4" />
+              </Button>
+              <Button onClick={handleReset} variant="outline" size="sm">
+                <RotateCcw className="w-4 h-4 mr-1" />
+                Reset
+              </Button>
+              <Button onClick={startChallenge} variant="secondary" size="sm">
+                Challenge Mode
+              </Button>
             </div>
-          </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={() => generateArray(inputMode)} variant="outline" size="sm">
-              <Shuffle className="w-4 h-4 mr-2" />
-              Generate Array
-            </Button>
-            <Button onClick={visualize} variant="default" size="sm">
-              Visualize
-            </Button>
-            <Button onClick={handlePlayPause} variant="outline" size="sm" disabled={steps.length === 0}>
-              {isPlaying ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-              {isPlaying ? "Pause" : "Play"}
-            </Button>
-            <Button onClick={handlePrevious} variant="outline" size="sm" disabled={currentStep <= 0}>
-              <SkipBack className="w-4 h-4" />
-            </Button>
-            <Button onClick={handleNext} variant="outline" size="sm" disabled={currentStep >= steps.length - 1}>
-              <SkipForward className="w-4 h-4" />
-            </Button>
-            <Button onClick={handleReset} variant="outline" size="sm">
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Reset
-            </Button>
-            <Button onClick={startChallenge} variant="secondary" size="sm">
-              Challenge Mode
-            </Button>
-          </div>
+            {showChallenge && (
+              <Card className="p-3 bg-primary/5 border-primary/20">
+                <h3 className="font-semibold mb-2 text-sm">🎯 Predict Next Step</h3>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Describe the next operation..."
+                    value={challengeAnswer}
+                    onChange={(e) => setChallengeAnswer(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && checkChallenge()}
+                    className="text-sm"
+                  />
+                  <Button onClick={checkChallenge} size="sm">
+                    Check
+                  </Button>
+                </div>
+              </Card>
+            )}
+          </Card>
 
-          {showChallenge && (
-            <Card className="p-4 bg-primary/5 border-primary/20">
-              <h3 className="font-semibold mb-2">🎯 Predict the Next Step</h3>
-              <p className="text-sm text-muted-foreground mb-3">
-                What will happen in the next step?
-              </p>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Describe the next operation..."
-                  value={challengeAnswer}
-                  onChange={(e) => setChallengeAnswer(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && checkChallenge()}
-                />
-                <Button onClick={checkChallenge} size="sm">
-                  Check
-                </Button>
+          {/* Visualization */}
+          <Card className="p-4 flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted/20">
+            <div className="w-full flex items-end justify-center gap-1 h-48">
+              {displayArray.map((value, idx) => {
+                const isComparing = currentStepData?.comparing?.includes(idx);
+                const isSwapping = currentStepData?.swapping?.includes(idx);
+                const isSorted = currentStepData?.sorted?.includes(idx);
+                const isPivot = currentStepData?.pivot === idx;
+
+                let barColor = "bg-primary";
+                if (isSorted) barColor = "bg-green-500";
+                else if (isSwapping) barColor = "bg-red-500";
+                else if (isComparing) barColor = "bg-yellow-500";
+                else if (isPivot) barColor = "bg-purple-500";
+
+                return (
+                  <div key={idx} className="flex flex-col items-center gap-1 flex-1 max-w-[80px]">
+                    <span className="text-xs font-mono text-muted-foreground">{value}</span>
+                    <div
+                      className={`w-full ${barColor} rounded-t-md transition-all duration-300`}
+                      style={{ height: `${(value / maxValue) * 150}px` }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            {currentStepData && (
+              <div className="mt-4 text-center">
+                <div className="inline-block bg-primary/10 text-primary px-3 py-1 rounded-md text-sm font-medium">
+                  Step {currentStep + 1} of {steps.length}
+                </div>
               </div>
-            </Card>
-          )}
-        </Card>
+            )}
+          </Card>
 
-        {/* Visualization Area */}
-        <Card className="flex-1 p-6 flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted/20">
-          <div className="w-full flex items-end justify-center gap-1 h-64">
-            {displayArray.map((value, idx) => {
-              const isComparing = currentStepData?.comparing?.includes(idx);
-              const isSwapping = currentStepData?.swapping?.includes(idx);
-              const isSorted = currentStepData?.sorted?.includes(idx);
-              const isPivot = currentStepData?.pivot === idx;
+          {/* Complexity Box Below Visualization */}
+          <Card className="p-3 bg-muted/20 border">
+            <div className="text-sm font-semibold mb-3">Complexity Analysis</div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Time Complexity</div>
+                <div className="font-mono text-xs space-y-0.5">
+                  <div><span className="text-muted-foreground">Best:</span> <span className="text-green-600 dark:text-green-400">{algorithmData.complexity.time.best}</span></div>
+                  <div><span className="text-muted-foreground">Avg:</span> <span className="text-yellow-600 dark:text-yellow-400">{algorithmData.complexity.time.average}</span></div>
+                  <div><span className="text-muted-foreground">Worst:</span> <span className="text-red-600 dark:text-red-400">{algorithmData.complexity.time.worst}</span></div>
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Space Complexity</div>
+                <div className="font-mono text-sm font-semibold text-purple-600 dark:text-purple-400">
+                  {algorithmData.complexity.space}
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
 
-              let barColor = "bg-primary";
-              if (isSorted) barColor = "bg-green-500";
-              else if (isSwapping) barColor = "bg-red-500";
-              else if (isComparing) barColor = "bg-yellow-500";
-              else if (isPivot) barColor = "bg-purple-500";
+        {/* RIGHT: Code Editor + Live Execution */}
+        <div className="lg:w-[56%] flex flex-col gap-4">
+          {/* Code Display */}
+          <CodeDisplay
+            code={algorithmData.code}
+            language={algorithmData.language}
+            highlightLines={currentStepData?.highlightLines || []}
+          />
 
-              return (
-                <div key={idx} className="flex flex-col items-center gap-1 flex-1 max-w-[80px]">
-                  <span className="text-xs font-mono text-muted-foreground">{value}</span>
-                  <div
-                    className={`w-full ${barColor} rounded-t-md transition-all duration-300 relative group`}
-                    style={{ height: `${(value / maxValue) * 200}px` }}
-                  >
-                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs font-mono opacity-0 group-hover:opacity-100 transition-opacity">
-                      {idx}
+          {/* Live Execution Box */}
+          <Card className="p-4 bg-muted/30 border-2">
+            <div className="flex items-center gap-2 font-semibold mb-3 pb-2 border-b">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+              <span className="text-base">Live Execution</span>
+            </div>
+            
+            {currentStepData ? (
+              <div className="space-y-3">
+                <div>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase mb-1">
+                    Current Operation
+                  </div>
+                  <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                    <p className="text-sm font-medium">{currentStepData.description}</p>
+                  </div>
+                </div>
+
+                {currentStepData.highlightLines.length > 0 && (
+                  <div>
+                    <div className="text-xs font-semibold text-muted-foreground uppercase mb-1">
+                      Executing Line
+                    </div>
+                    <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                      <p className="text-sm font-mono font-semibold">
+                        Line {currentStepData.highlightLines.join(", ")}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase mb-1">
+                    Array State
+                  </div>
+                  <div className="p-2 rounded-lg bg-muted/50 border">
+                    <div className="flex flex-wrap gap-1">
+                      {displayArray.map((val, idx) => {
+                        const isComparing = currentStepData?.comparing?.includes(idx);
+                        const isSwapping = currentStepData?.swapping?.includes(idx);
+                        const isSorted = currentStepData?.sorted?.includes(idx);
+                        const isPivot = currentStepData?.pivot === idx;
+                        
+                        let bgColor = "bg-primary/20";
+                        if (isSorted) bgColor = "bg-green-500/30";
+                        else if (isSwapping) bgColor = "bg-red-500/30";
+                        else if (isComparing) bgColor = "bg-yellow-500/30";
+                        else if (isPivot) bgColor = "bg-purple-500/30";
+                        
+                        return (
+                          <div key={idx} className={`${bgColor} px-2 py-1 rounded text-xs font-mono font-semibold`}>
+                            {val}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-
-          {currentStepData && (
-            <div className="mt-8 text-center space-y-2">
-              <div className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-md">
-                <p className="text-sm font-medium">
-                  Step {currentStep + 1} of {steps.length}
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-sm text-muted-foreground">
+                  Click "Visualize" to see live execution
                 </p>
               </div>
-              <p className="text-muted-foreground max-w-2xl">{currentStepData.description}</p>
-            </div>
-          )}
-
-          {/* Legend */}
-          <div className="mt-6 flex flex-wrap gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-primary rounded"></div>
-              <span>Unsorted</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-yellow-500 rounded"></div>
-              <span>Comparing</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-500 rounded"></div>
-              <span>Swapping</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-purple-500 rounded"></div>
-              <span>Pivot</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-500 rounded"></div>
-              <span>Sorted</span>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Right Panel - Code and Complexity */}
-      <div className="lg:w-[500px] flex flex-col gap-4">
-        <CodeDisplay
-          code={algorithmData.code}
-          language={algorithmData.language}
-          highlightLines={currentStepData?.highlightLines || []}
-        />
-        <ComplexityDisplay
-          timeComplexity={algorithmData.complexity.time}
-          spaceComplexity={algorithmData.complexity.space}
-          description={algorithmData.complexity.description}
-        />
+            )}
+          </Card>
+        </div>
       </div>
     </div>
   );

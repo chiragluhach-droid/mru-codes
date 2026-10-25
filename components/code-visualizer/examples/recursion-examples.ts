@@ -22,6 +22,11 @@ let frameIdCounter = 0;
 export const recursionExamples = {
   factorial: {
     name: "Factorial",
+    complexity: {
+      time: "O(n)",
+      space: "O(n)",
+      description: "Time complexity is O(n) as we make n recursive calls. Space complexity is O(n) due to the call stack depth."
+    },
     code: {
       c: `int factorial(int n) {
     if (n <= 1) {
@@ -177,83 +182,110 @@ console.log(\`Factorial of \${n} is \${answer}\`);`,
   },
   fibonacci: {
     name: "Fibonacci",
+    complexity: {
+      time: "O(2^n)",
+      space: "O(n)",
+      description: "Time complexity is O(2^n) due to exponential branching - each call makes two more calls. Space complexity is O(n) for the maximum call stack depth."
+    },
     code: {
-      c: `int fibonacci(int n) {
+      c: `void printFibonacci(int n) {
+    printf("Fibonacci sequence: ");
+    for (int i = 0; i < n; i++) {
+        printf("%d ", fibonacci(i));
+    }
+}
+
+int fibonacci(int n) {
     if (n <= 1) {
         return n;
     }
-    int fib1 = fibonacci(n - 1);
-    int fib2 = fibonacci(n - 2);
-    return fib1 + fib2;
+    return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
 int main() {
     int n = 5;
-    int answer = fibonacci(n);
-    printf("Fibonacci(%d) = %d", n, answer);
+    printFibonacci(n);
     return 0;
 }`,
-      cpp: `int fibonacci(int n) {
+      cpp: `void printFibonacci(int n) {
+    cout << "Fibonacci sequence: ";
+    for (int i = 0; i < n; i++) {
+        cout << fibonacci(i) << " ";
+    }
+}
+
+int fibonacci(int n) {
     if (n <= 1) {
         return n;
     }
-    int fib1 = fibonacci(n - 1);
-    int fib2 = fibonacci(n - 2);
-    return fib1 + fib2;
+    return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
 int main() {
     int n = 5;
-    int answer = fibonacci(n);
-    cout << "Fibonacci(" << n << ") = " << answer;
+    printFibonacci(n);
     return 0;
 }`,
-      java: `public int fibonacci(int n) {
+      java: `public void printFibonacci(int n) {
+    System.out.print("Fibonacci sequence: ");
+    for (int i = 0; i < n; i++) {
+        System.out.print(fibonacci(i) + " ");
+    }
+}
+
+public int fibonacci(int n) {
     if (n <= 1) {
         return n;
     }
-    int fib1 = fibonacci(n - 1);
-    int fib2 = fibonacci(n - 2);
-    return fib1 + fib2;
+    return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
 public static void main(String[] args) {
     int n = 5;
-    int answer = fibonacci(n);
-    System.out.println("Fibonacci(" + n + ") = " + answer);
+    printFibonacci(n);
 }`,
       python: `def fibonacci(n):
     if n <= 1:
         return n
-    fib1 = fibonacci(n - 1)
-    fib2 = fibonacci(n - 2)
-    return fib1 + fib2
+    return fibonacci(n - 1) + fibonacci(n - 2)
+
+def print_fibonacci(n):
+    print("Fibonacci sequence:", end=" ")
+    for i in range(n):
+        print(fibonacci(i), end=" ")
 
 if __name__ == "__main__":
     n = 5
-    answer = fibonacci(n)
-    print(f"Fibonacci({n}) = {answer}")`,
+    print_fibonacci(n)`,
       javascript: `function fibonacci(n) {
     if (n <= 1) {
         return n;
     }
-    const fib1 = fibonacci(n - 1);
-    const fib2 = fibonacci(n - 2);
-    return fib1 + fib2;
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+function printFibonacci(n) {
+    let sequence = "Fibonacci sequence: ";
+    for (let i = 0; i < n; i++) {
+        sequence += fibonacci(i) + " ";
+    }
+    console.log(sequence);
 }
 
 const n = 5;
-const answer = fibonacci(n);
-console.log(\`Fibonacci(\${n}) = \${answer}\`);`,
+printFibonacci(n);`,
     },
     generateSteps: (n: number): Step[] => {
       const steps: Step[] = [];
       frameIdCounter = 0;
-      let callCount = 0;
-      const maxCalls = 50;
+      const sequence: number[] = [];
+      const memo: Map<number, number> = new Map();
 
-      function fibRecursive(value: number, stack: CallStackFrame[]): number {
-        if (callCount++ > maxCalls) return 0;
+      function fibRecursive(value: number, stack: CallStackFrame[], forPrint: boolean = false): number {
+        // Use memoization to avoid too many calls
+        if (memo.has(value)) {
+          return memo.get(value)!;
+        }
         
         const frameId = frameIdCounter++;
         const frame: CallStackFrame = {
@@ -263,82 +295,114 @@ console.log(\`Fibonacci(\${n}) = \${answer}\`);`,
         };
         
         stack.push(frame);
-        steps.push({
-          callStack: [...stack],
-          currentLine: 1,
-          description: `Calling fibonacci(${value})`,
-          variables: {},
-          highlightLines: [1],
-        });
+        
+        if (!forPrint || frameIdCounter < 40) {
+          steps.push({
+            callStack: [...stack],
+            currentLine: 9,
+            description: `Calling fibonacci(${value})`,
+            variables: {},
+            highlightLines: [9],
+          });
 
-        steps.push({
-          callStack: [...stack],
-          currentLine: 2,
-          description: `Checking if ${value} <= 1`,
-          variables: {},
-          highlightLines: [2],
-        });
+          steps.push({
+            callStack: [...stack],
+            currentLine: 10,
+            description: `Checking if ${value} <= 1`,
+            variables: {},
+            highlightLines: [10],
+          });
+        }
 
         if (value <= 1) {
           frame.returnValue = value;
-          steps.push({
-            callStack: [...stack],
-            currentLine: 3,
-            description: `Base case! Returning ${value}`,
-            variables: {},
-            highlightLines: [3],
-          });
+          
+          if (!forPrint || frameIdCounter < 40) {
+            steps.push({
+              callStack: [...stack],
+              currentLine: 11,
+              description: `Base case! Returning ${value}`,
+              variables: {},
+              highlightLines: [11],
+            });
+          }
+          
           stack.pop();
+          memo.set(value, value);
           return value;
         }
 
-        steps.push({
-          callStack: [...stack],
-          currentLine: 5,
-          description: `Calling fibonacci(${value - 1})`,
-          variables: {},
-          highlightLines: [5],
-        });
+        if (!forPrint || frameIdCounter < 40) {
+          steps.push({
+            callStack: [...stack],
+            currentLine: 13,
+            description: `Computing fibonacci(${value - 1}) + fibonacci(${value - 2})`,
+            variables: {},
+            highlightLines: [13],
+          });
+        }
 
-        const fib1 = fibRecursive(value - 1, stack);
-        
-        frame.localVars = { fib1 };
-        steps.push({
-          callStack: [...stack],
-          currentLine: 6,
-          description: `Got ${fib1} from fibonacci(${value - 1}). Now calling fibonacci(${value - 2})`,
-          variables: {},
-          highlightLines: [6],
-        });
-
-        const fib2 = fibRecursive(value - 2, stack);
+        const fib1 = fibRecursive(value - 1, stack, forPrint);
+        const fib2 = fibRecursive(value - 2, stack, forPrint);
+        const result = fib1 + fib2;
         
         frame.localVars = { fib1, fib2 };
-        const result = fib1 + fib2;
         frame.returnValue = result;
         
-        steps.push({
-          callStack: [...stack],
-          currentLine: 7,
-          description: `Got ${fib2} from fibonacci(${value - 2}). Returning ${fib1} + ${fib2} = ${result}`,
-          variables: {},
-          highlightLines: [7],
-        });
+        if (!forPrint || frameIdCounter < 40) {
+          steps.push({
+            callStack: [...stack],
+            currentLine: 13,
+            description: `fibonacci(${value - 1}) = ${fib1}, fibonacci(${value - 2}) = ${fib2}. Returning ${result}`,
+            variables: {},
+            highlightLines: [13],
+          });
+        }
 
         stack.pop();
+        memo.set(value, result);
         return result;
       }
 
-      const stack: CallStackFrame[] = [];
-      const result = fibRecursive(n, stack);
+      // Simulate the loop that generates the sequence
+      steps.push({
+        callStack: [],
+        currentLine: 2,
+        description: `Starting to generate Fibonacci sequence for n = ${n}`,
+        variables: { n },
+        highlightLines: [2],
+      });
+
+      for (let i = 0; i < n; i++) {
+        steps.push({
+          callStack: [],
+          currentLine: 3,
+          description: `Loop iteration ${i + 1}: Computing fibonacci(${i})`,
+          variables: { n, i },
+          highlightLines: [3],
+        });
+
+        const stack: CallStackFrame[] = [];
+        const fibValue = fibRecursive(i, stack, i > 2); // Only show detailed steps for first few
+        sequence.push(fibValue);
+
+        steps.push({
+          callStack: [],
+          currentLine: 4,
+          description: `fibonacci(${i}) = ${fibValue}. Sequence so far: ${sequence.join(", ")}`,
+          variables: { n, i },
+          highlightLines: [4],
+          output: `Fibonacci sequence: ${sequence.join(" ")}`,
+        });
+      }
       
       steps.push({
         callStack: [],
-        currentLine: 11,
-        description: `✓ Final result: fibonacci(${n}) = ${result}`,
-        variables: { answer: result },
-        highlightLines: [11],
-        output: `Fibonacci(${n}) = ${result}`,
+        currentLine: 8,
+        description: `✓ Complete Fibonacci sequence generated!`,
+        variables: { n },
+        highlightLines: [8],
+        output: `Fibonacci sequence: ${sequence.join(" ")}`,
       });
 
       return steps;
@@ -346,6 +410,11 @@ console.log(\`Fibonacci(\${n}) = \${answer}\`);`,
   },
   sum: {
     name: "Sum of N",
+    complexity: {
+      time: "O(n)",
+      space: "O(n)",
+      description: "Time complexity is O(n) for n recursive calls. Space complexity is O(n) for the recursion call stack."
+    },
     code: {
       c: `int sum(int n) {
     if (n == 0) {
@@ -408,8 +477,9 @@ console.log(\`Sum(1 to \${n}) = \${answer}\`);`,
     generateSteps: (n: number): Step[] => {
       const steps: Step[] = [];
       frameIdCounter = 0;
+      const partialSums: string[] = [];
 
-      function sumRecursive(value: number, stack: CallStackFrame[]): number {
+      function sumRecursive(value: number, stack: CallStackFrame[], accumulated: number = 0): number {
         const frameId = frameIdCounter++;
         const frame: CallStackFrame = {
           functionName: "sum",
@@ -455,16 +525,25 @@ console.log(\`Sum(1 to \${n}) = \${answer}\`);`,
           highlightLines: [5],
         });
 
-        const recursiveResult = sumRecursive(value - 1, stack);
+        const recursiveResult = sumRecursive(value - 1, stack, accumulated);
         const result = value + recursiveResult;
         
+        // Build the addition string for display
+        if (value === n) {
+          // Don't add yet, we're at the top
+        } else if (value > 1) {
+          partialSums.push(`${value}`);
+        }
+        
         frame.returnValue = result;
+        const sumStr = value === n ? `${n} + ${n-1} + ... + 1` : `Computing: ${value} + ...`;
         steps.push({
           callStack: [...stack],
           currentLine: 5,
           description: `Received ${recursiveResult} from sum(${value - 1}). Returning ${value} + ${recursiveResult} = ${result}`,
           variables: {},
           highlightLines: [5],
+          output: result < n ? `Partial sum: ${result}` : undefined,
         });
 
         stack.pop();
@@ -474,13 +553,16 @@ console.log(\`Sum(1 to \${n}) = \${answer}\`);`,
       const stack: CallStackFrame[] = [];
       const result = sumRecursive(n, stack);
       
+      // Build the sum sequence
+      const sequence = Array.from({length: n}, (_, i) => i + 1).join(" + ");
+      
       steps.push({
         callStack: [],
         currentLine: 10,
-        description: `✓ Final result: sum(1 to ${n}) = ${result}`,
+        description: `✓ Final result: ${sequence} = ${result}`,
         variables: { answer: result },
         highlightLines: [10],
-        output: `Sum(1 to ${n}) = ${result}`,
+        output: `Sum(1 to ${n}) = ${sequence} = ${result}`,
       });
 
       return steps;
@@ -488,6 +570,11 @@ console.log(\`Sum(1 to \${n}) = \${answer}\`);`,
   },
   power: {
     name: "Power",
+    complexity: {
+      time: "O(n)",
+      space: "O(n)",
+      description: "Time complexity is O(n) where n is the exponent. Space complexity is O(n) for the call stack depth."
+    },
     code: {
       c: `int power(int base, int exp) {
     if (exp == 0) {
@@ -602,12 +689,17 @@ console.log(\`\${base}^\${exp} = \${answer}\`);`,
         const result = b * recursiveResult;
         
         frame.returnValue = result;
+        
+        // Build power calculation string
+        const powerStr = Array(e).fill(b).join(" × ");
+        
         steps.push({
           callStack: [...stack],
           currentLine: 5,
           description: `Received ${recursiveResult} from power(${b}, ${e - 1}). Returning ${b} * ${recursiveResult} = ${result}`,
           variables: {},
           highlightLines: [5],
+          output: result < Math.pow(b, exp) ? `Partial: ${b}^${e} = ${result}` : undefined,
         });
 
         stack.pop();
@@ -617,13 +709,16 @@ console.log(\`\${base}^\${exp} = \${answer}\`);`,
       const stack: CallStackFrame[] = [];
       const result = powerRecursive(base, exp, stack);
       
+      // Build the multiplication sequence
+      const sequence = Array(exp).fill(base).join(" × ");
+      
       steps.push({
         callStack: [],
         currentLine: 10,
-        description: `✓ Final result: ${base}^${exp} = ${result}`,
+        description: `✓ Final result: ${base}^${exp} = ${sequence} = ${result}`,
         variables: { answer: result },
         highlightLines: [10],
-        output: `${base}^${exp} = ${result}`,
+        output: `${base}^${exp} = ${sequence} = ${result}`,
       });
 
       return steps;

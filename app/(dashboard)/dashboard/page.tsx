@@ -16,6 +16,7 @@ export default async function DashboardPage() {
     email: profile.email,
     full_name: profile.fullName,
     roll_number: profile.rollNumber,
+    department: profile.department,
     section: profile.section,
     role: profile.role,
     avatar_url: profile.avatarUrl,

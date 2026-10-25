@@ -179,10 +179,10 @@ export function RecursionVisualizer() {
         </Card>
 
         {/* Call Stack Visualization */}
-        <Card className="flex-1 p-6 bg-gradient-to-br from-background to-muted/20">
+        <Card className="p-6 bg-gradient-to-br from-background to-muted/20">
           <h3 className="text-lg font-semibold mb-4">Call Stack</h3>
           
-          <div className="flex flex-col-reverse gap-2 min-h-[300px]">
+          <div className="flex flex-col-reverse gap-2 min-h-[200px]">
             {currentStepData?.callStack && currentStepData.callStack.length > 0 ? (
               currentStepData.callStack.map((frame, index) => (
                 <div
@@ -216,48 +216,87 @@ export function RecursionVisualizer() {
           </div>
 
           {currentStepData && (
-            <div className="mt-6 space-y-3">
-              <div className="bg-primary/10 text-primary px-4 py-2 rounded-md">
-                <p className="text-sm font-medium">
-                  Step {currentStep + 1} of {steps.length}
-                </p>
-              </div>
-              <p className="text-sm text-muted-foreground">{currentStepData.description}</p>
-              
-              {currentStepData.output && (
-                <div className="bg-green-500/10 border border-green-500/20 px-4 py-2 rounded-md">
-                  <p className="text-sm font-mono text-green-600 dark:text-green-400">
-                    Output: {currentStepData.output}
-                  </p>
-                </div>
-              )}
+            <div className="mt-4 bg-primary/10 text-primary px-4 py-2 rounded-md">
+              <p className="text-sm font-medium">
+                Step {currentStep + 1} of {steps.length}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">{currentStepData.description}</p>
             </div>
           )}
         </Card>
 
-        {/* Variables Panel */}
-        {currentStepData?.variables && Object.keys(currentStepData.variables).length > 0 && (
-          <Card className="p-4">
-            <h3 className="text-sm font-semibold mb-3">Global Variables</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {Object.entries(currentStepData.variables).map(([key, value]) => (
-                <div key={key} className="flex items-center justify-between bg-muted/50 px-3 py-2 rounded-md">
-                  <span className="text-sm font-mono text-muted-foreground">{key}:</span>
-                  <span className="text-sm font-mono font-bold">{String(value)}</span>
-                </div>
-              ))}
+        {/* Complexity Analysis */}
+        <Card className="p-4">
+          <h3 className="text-sm font-semibold mb-3">Complexity Analysis</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <span className="text-xs text-muted-foreground">Time:</span>
+              <p className="text-sm font-mono font-semibold">{example.complexity?.time || "O(2^n)"}</p>
             </div>
-          </Card>
-        )}
+            <div>
+              <span className="text-xs text-muted-foreground">Space:</span>
+              <p className="text-sm font-mono font-semibold">{example.complexity?.space || "O(n)"}</p>
+            </div>
+          </div>
+          {example.complexity?.description && (
+            <p className="text-xs text-muted-foreground mt-3 pt-3 border-t">
+              {example.complexity.description}
+            </p>
+          )}
+        </Card>
       </div>
 
       {/* Right Panel - Code */}
-      <div className="lg:w-[600px]">
+      <div className="lg:w-[56%] flex flex-col space-y-4">
         <CodeDisplay
           code={currentCode}
           language={language === "cpp" ? "cpp" : language}
           highlightLines={currentStepData?.highlightLines || []}
         />
+
+        {/* Live Code Explanation */}
+        <Card className="p-4">
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            Live Execution
+          </h3>
+          {currentStepData ? (
+            <div className="space-y-2">
+              <div className="flex items-start gap-2">
+                <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-1 rounded">
+                  Line {currentStepData.highlightLines.join(", ")}
+                </span>
+                <p className="text-sm text-muted-foreground flex-1">
+                  {currentStepData.description}
+                </p>
+              </div>
+              {currentStepData.callStack.length > 0 && (
+                <div className="text-xs font-mono bg-muted/50 px-3 py-2 rounded">
+                  <span className="text-muted-foreground">Current Call: </span>
+                  <span className="font-semibold">
+                    {currentStepData.callStack[currentStepData.callStack.length - 1].functionName}(
+                    {Object.entries(currentStepData.callStack[currentStepData.callStack.length - 1].params)
+                      .map(([k, v]) => `${k}=${v}`)
+                      .join(", ")}
+                    )
+                  </span>
+                </div>
+              )}
+              {currentStepData.output && (
+                <div className="bg-green-500/10 border border-green-500/20 px-3 py-2 rounded-md">
+                  <p className="text-xs font-semibold mb-1">Output:</p>
+                  <pre className="text-xs font-mono text-green-600 dark:text-green-400 whitespace-pre-wrap">
+                    {currentStepData.output}
+                  </pre>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Click "Visualize" to start execution
+            </p>
+          )}
+        </Card>
       </div>
     </div>
   );

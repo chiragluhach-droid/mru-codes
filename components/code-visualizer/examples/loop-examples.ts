@@ -12,6 +12,11 @@ interface Step {
 export const loopExamples = {
   forLoop: {
     name: "For Loop - Sum",
+    complexity: {
+      time: "O(n)",
+      space: "O(1)",
+      description: "Time complexity is O(n) as the loop runs n times. Space complexity is O(1) as we only use a fixed amount of variables."
+    },
     code: {
       c: `int main() {\n    int n = 5;\n    int sum = 0;\n    \n    for (int i = 1; i <= n; i++) {\n        sum += i;\n    }\n    \n    printf("Sum: %d", sum);\n    return 0;\n}`,
       cpp: `int main() {\n    int n = 5;\n    int sum = 0;\n    \n    for (int i = 1; i <= n; i++) {\n        sum += i;\n    }\n    \n    cout << "Sum: " << sum;\n    return 0;\n}`,
@@ -91,6 +96,11 @@ export const loopExamples = {
   },
   whileLoop: {
     name: "While Loop",
+    complexity: {
+      time: "O(n)",
+      space: "O(1)",
+      description: "Time complexity is O(n) for n iterations. Space complexity is O(1) as we use constant extra space."
+    },
     code: {
       c: `int main() {\n    int n = 5;\n    int i = 1;\n    int product = 1;\n    \n    while (i <= n) {\n        product *= i;\n        i++;\n    }\n    \n    printf("Product: %d", product);\n    return 0;\n}`,
       cpp: `int main() {\n    int n = 5;\n    int i = 1;\n    int product = 1;\n    \n    while (i <= n) {\n        product *= i;\n        i++;\n    }\n    \n    cout << "Product: " << product;\n    return 0;\n}`,
@@ -163,6 +173,11 @@ export const loopExamples = {
   },
   nestedLoop: {
     name: "Nested Loop - Pattern",
+    complexity: {
+      time: "O(n²)",
+      space: "O(1)",
+      description: "Time complexity is O(n²) as the inner loop runs n times for each of the n iterations of the outer loop. Space complexity is O(1)."
+    },
     code: {
       c: `int main() {\n    int n = 4;\n    \n    for (int i = 1; i <= n; i++) {\n        for (int j = 1; j <= i; j++) {\n            printf("* ");\n        }\n        printf("\\n");\n    }\n    return 0;\n}`,
       cpp: `int main() {\n    int n = 4;\n    \n    for (int i = 1; i <= n; i++) {\n        for (int j = 1; j <= i; j++) {\n            cout << "* ";\n        }\n        cout << endl;\n    }\n    return 0;\n}`,
@@ -226,6 +241,11 @@ export const loopExamples = {
   },
   doWhileLoop: {
     name: "Do-While Loop",
+    complexity: {
+      time: "O(n)",
+      space: "O(1)",
+      description: "Time complexity is O(n) for n iterations. Space complexity is O(1). Do-While loops execute at least once before checking the condition."
+    },
     code: {
       c: `int main() {\n    int n = 5;\n    int i = 1;\n    \n    do {\n        printf("%d ", i);\n        i++;\n    } while (i <= n);\n    \n    return 0;\n}`,
       cpp: `int main() {\n    int n = 5;\n    int i = 1;\n    \n    do {\n        cout << i << " ";\n        i++;\n    } while (i <= n);\n    \n    return 0;\n}`,
