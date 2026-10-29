@@ -97,11 +97,12 @@ model Profile {
   department   String?  @map("department")
   section      String?
   role         UserRole @default(student)
-  avatarUrl    String?  @map("avatar_url")
-  totalScore   Int      @default(0) @map("total_score")
-  quizzesTaken Int      @default(0) @map("quizzes_taken")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  avatarUrl           String?  @map("avatar_url")
+  hackerRankUsername  String?  @map("hackerrank_username")
+  totalScore          Int      @default(0) @map("total_score")
+  quizzesTaken        Int      @default(0) @map("quizzes_taken")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
   // Relations
   quizzesCreated        Quiz[]                 @relation("QuizCreator")

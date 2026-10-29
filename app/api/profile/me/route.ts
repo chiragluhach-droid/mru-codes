@@ -32,15 +32,19 @@ export async function PATCH(request: Request) {
 
     const body = await request.json();
 
+    // Build update data object
+    const updateData: any = {};
+    
+    if (body.fullName !== undefined) updateData.fullName = body.fullName;
+    if (body.rollNumber !== undefined) updateData.rollNumber = body.rollNumber ?? null;
+    if (body.department !== undefined) updateData.department = body.department ?? null;
+    if (body.section !== undefined) updateData.section = body.section ?? null;
+    if (body.avatarUrl !== undefined) updateData.avatarUrl = body.avatarUrl ?? null;
+    if (body.hackerRankUsername !== undefined) updateData.hackerRankUsername = body.hackerRankUsername ?? null;
+
     const profile = await prisma.profile.update({
       where: { id: user.id },
-      data: {
-        fullName: body.fullName,
-        rollNumber: body.rollNumber ?? null,
-        department: body.department ?? null,
-        section: body.section ?? null,
-        avatarUrl: body.avatarUrl ?? null,
-      },
+      data: updateData,
     });
 
     return NextResponse.json({ profile });

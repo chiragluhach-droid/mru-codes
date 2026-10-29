@@ -63,14 +63,36 @@ export function HackerRankStatsCard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleConnect = () => {
+  const handleConnect = async () => {
     if (!username.trim()) {
       toast.error("Please enter your HackerRank username");
       return;
     }
 
+    // Save to localStorage
     localStorage.setItem("hackerrank_username", username.trim());
     setSavedUsername(username.trim());
+    
+    // Also save to database via API
+    try {
+      const response = await fetch('/api/profile/me', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          hackerRankUsername: username.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to save HackerRank username to database');
+      }
+    } catch (error) {
+      console.error('Error saving HackerRank username:', error);
+    }
+
+    // Fetch stats
     fetchStats(username.trim());
   };
 

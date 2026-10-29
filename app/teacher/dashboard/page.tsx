@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeacherPerformanceDashboard } from "@/components/dashboard/teacher-performance-dashboard";
+import { TeacherHackerRankStats } from "@/components/dashboard/teacher-hackerrank-stats";
 
 export default async function TeacherDashboardPage() {
   const profile = await getProfile();
@@ -57,6 +58,7 @@ export default async function TeacherDashboardPage() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="performance">Student Performance</TabsTrigger>
+          <TabsTrigger value="hackerrank">HackerRank Stats</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-8">
@@ -236,6 +238,10 @@ export default async function TeacherDashboardPage() {
             </div>
             <TeacherPerformanceDashboard />
           </div>
+        </TabsContent>
+
+        <TabsContent value="hackerrank" className="space-y-4">
+          <TeacherHackerRankStats />
         </TabsContent>
       </Tabs>
     </div>
