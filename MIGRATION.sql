@@ -1,22 +1,33 @@
 -- Migration: Add hackerrank_username to profiles table
--- This will be automatically applied when deploying to Render
+-- Run this in Supabase SQL Editor
 
--- Add the hackerrank_username column if it doesn't exist
-DO $$ 
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'profiles' 
-        AND column_name = 'hackerrank_username'
-    ) THEN
-        ALTER TABLE profiles ADD COLUMN hackerrank_username TEXT;
-        RAISE NOTICE 'Column hackerrank_username added successfully';
-    ELSE
-        RAISE NOTICE 'Column hackerrank_username already exists, skipping';
-    END IF;
-END $$;
+-- Step 1: Add the column if it doesn't exist
+ALTER TABLE profiles 
+ADD COLUMN IF NOT EXISTS hackerrank_username TEXT;
 
--- Verify the column was added
-SELECT column_name, data_type, is_nullable
+-- Step 2: Verify the column was added
+SELECT 
+    column_name, 
+    data_type, 
+    is_nullable,
+    column_default
 FROM information_schema.columns
-WHERE table_name = 'profiles' AND column_name = 'hackerrank_username';
+WHERE table_name = 'profiles' 
+AND column_name = 'hackerrank_username';
+
+-- Expected output: 1 row showing the column details
+-- column_name: hackerrank_username
+-- data_type: text
+-- is_nullable: YES
+-- column_default: NULL
+
+-- Step 3: (Optional) Check if any students have already set their HackerRank username
+SELECT 
+    full_name,
+    email,
+    hackerrank_username
+FROM profiles
+WHERE role = 'student'
+AND hackerrank_username IS NOT NULL;
+
+-- If no rows, that's normal (no students connected HackerRank yet)
