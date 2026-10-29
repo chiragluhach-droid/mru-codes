@@ -31,14 +31,11 @@ export async function getOrCreateProfileForSupabaseUser(user: User) {
 
   return prisma.profile.upsert({
     where: { id: user.id },
+    // Signup metadata only seeds a new profile. After that the profile row is
+    // the source of truth (edited via PATCH /api/profile/me), so only the auth
+    // email is kept in sync — re-applying metadata would undo Settings changes.
     update: {
-      // Keep these in sync if they change in Supabase
       email,
-      fullName,
-      rollNumber,
-      department,
-      section,
-      role,
     },
     create: {
       id: user.id,
