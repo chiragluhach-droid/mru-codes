@@ -12,10 +12,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { isAuthRole, loginPath, signupPath } from "@/lib/auth-roles";
 
 function VerifyAccountContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
+  const roleParam = searchParams.get("role");
+  const role = isAuthRole(roleParam) ? roleParam : null;
 
   return (
     <div className="min-h-dvh relative overflow-hidden bg-background">
@@ -42,10 +45,10 @@ function VerifyAccountContent() {
               <BookOpen className="w-8 h-8 text-primary" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight mb-2">
-              DSA Learning Hub
+              C Programming Hub
             </h1>
             <p className="text-muted-foreground">
-              Master data structures & algorithms
+              Start your journey to mastering C Programming
             </p>
           </div>
 
@@ -107,12 +110,12 @@ function VerifyAccountContent() {
                     asChild
                     className="w-full h-11 font-medium group rounded-xl"
                   >
-                    <Link href="/login">
+                    <Link href={loginPath(role)}>
                       Go to Login
                       <ChevronRight className="ml-1.5 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
                     </Link>
                   </Button>
-                  <Link href="/signup" className="w-full">
+                  <Link href={signupPath("student")} className="w-full">
                     <Button
                       variant="ghost"
                       className="w-full h-10 text-muted-foreground hover:text-foreground rounded-xl"
@@ -130,7 +133,7 @@ function VerifyAccountContent() {
           <p className="text-center text-xs text-muted-foreground mt-8 animate-[fade-in_0.5s_ease-out_0.4s_both]">
             Already verified?{" "}
             <Link
-              href="/login"
+              href={loginPath(role)}
               className="font-medium text-primary hover:text-primary/80 underline-offset-4 hover:underline transition-colors"
             >
               Sign in

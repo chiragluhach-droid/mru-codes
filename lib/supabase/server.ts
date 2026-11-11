@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { getOrCreateProfileForSupabaseUser } from "@/lib/profile";
+import { roleForEmail } from "@/lib/faculty";
 
 // Create Supabase client for server-side auth operations
 export async function createClient() {
@@ -77,7 +78,16 @@ export async function getProfile() {
     where: { id: user.id },
   });
 
-  return profile ?? getOrCreateProfileForSupabaseUser(user);
+  if (!profile) return getOrCreateProfileForSupabaseUser(user);
+
+  // Teacher access follows the faculty list, so correct a stale role (e.g. an
+  // account that picked "teacher" back when teacher signup existed).
+  const role = roleForEmail(user.email);
+  if (profile.role !== role) {
+    return prisma.profile.update({ where: { id: user.id }, data: { role } });
+  }
+
+  return profile;
 }
 
 // Get profile with additional data

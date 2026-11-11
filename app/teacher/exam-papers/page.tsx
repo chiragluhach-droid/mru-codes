@@ -214,7 +214,7 @@ export default function TeacherExamPapersPage() {
                 <Input
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="e.g. DSA Mid-Term 2023"
+                  placeholder="e.g. C Programming Mid-Term 2023"
                 />
               </div>
               <div>
@@ -222,7 +222,7 @@ export default function TeacherExamPapersPage() {
                 <Input
                   value={form.subject}
                   onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                  placeholder="e.g. DSA, Data Structures"
+                  placeholder="e.g. C Programming, Pointers"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">

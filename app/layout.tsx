@@ -14,13 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DSA Learning Platform",
+  title: "C Programming Platform",
   description:
-    "A comprehensive platform for learning Data Structures and Algorithms with live quizzes and assignments",
+    "A comprehensive platform for learning C Programming with live quizzes and assignments",
   keywords: [
-    "DSA",
-    "Data Structures",
-    "Algorithms",
+    "C Programming",
+    "C Language",
+    "Programming",
     "Learning",
     "Quiz",
     "Education",

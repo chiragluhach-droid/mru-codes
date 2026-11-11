@@ -213,7 +213,7 @@ export async function GET(request: NextRequest) {
       }
 
       const workbook = new ExcelJS.Workbook();
-      workbook.creator = "DSA Dashboard";
+      workbook.creator = "C Programming Platform";
       workbook.created = new Date();
 
       const headerStyle: Partial<ExcelJS.Style> = {

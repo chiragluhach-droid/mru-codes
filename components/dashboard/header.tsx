@@ -79,7 +79,7 @@ export function DashboardHeader({ profile }: { profile: Profile }) {
       <div className="flex h-14 items-center justify-between px-4 lg:px-6">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
           <GraduationCap className="h-5 w-5 text-primary" />
-          <span className="hidden sm:inline">DSA Platform</span>
+          <span className="hidden sm:inline">C Programming Platform</span>
         </Link>
 
         <div className="flex items-center gap-2">

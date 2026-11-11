@@ -99,7 +99,7 @@ export default async function StudentLearnPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
           <BookOpen className="h-8 w-8 text-primary" />
-          Learn DSA
+          Learn C Programming
         </h1>
         <p className="text-muted-foreground mt-1">
           Explore structured courseware from basics to advanced topics

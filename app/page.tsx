@@ -22,7 +22,7 @@ const features = [
   {
     icon: BookOpen,
     title: "Structured Learning",
-    description: "Master DSA concepts with organized courseware and comprehensive study materials.",
+    description: "Master C Programming concepts with organized courseware and comprehensive study materials.",
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
   },
@@ -112,7 +112,7 @@ export default function HomePage() {
               />
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-lg leading-tight">DSA Learning Platform</span>
+              <span className="font-bold text-lg leading-tight">C Programming Platform</span>
               <span className="text-xs text-muted-foreground leading-tight">Manav Rachna University</span>
             </div>
           </Link>
@@ -149,14 +149,14 @@ export default function HomePage() {
 
               {/* Main Heading */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05] sm:leading-[1.05] mb-6 animate-fade-in text-balance">
-                Master Data Structures &{" "}
+                Master{" "}
                 <span className="bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                  Algorithms
+                  C Programming
                 </span>
               </h1>
 
               <p className="text-base sm:text-lg text-muted-foreground/90 mb-10 max-w-2xl mx-auto leading-relaxed animate-fade-in text-pretty">
-                A comprehensive learning platform designed for MRU students to excel in DSA through
+                A comprehensive learning platform designed for MRU students to excel in C Programming through
                 interactive quizzes, structured assignments, and real-time performance tracking.
               </p>
 
@@ -174,7 +174,7 @@ export default function HomePage() {
                   </Button>
                 </Link>
                 <p className="text-sm text-muted-foreground">
-                  Get started your DSA journey with us
+                  Start your journey to mastering C Programming
                 </p>
               </div>
 
@@ -379,7 +379,7 @@ export default function HomePage() {
                 Ready to Start Your Journey?
               </h2>
               <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Join hundreds of MRU students already excelling in Data Structures & Algorithms.
+                Join hundreds of MRU students already excelling in C Programming.
                 Start learning today and unlock your potential.
               </p>
               <div className="flex flex-col items-center justify-center gap-4">
@@ -390,7 +390,7 @@ export default function HomePage() {
                   </Button>
                 </Link>
                 <p className="text-sm text-muted-foreground">
-                  Access your learning dashboard and continue your DSA journey
+                  Access your learning dashboard and continue your C Programming journey
                 </p>
               </div>
             </div>
@@ -411,7 +411,7 @@ export default function HomePage() {
                 className="h-6 w-6 rounded-full object-cover ring-1 ring-border/50"
               />
               <div>
-                <div className="font-semibold">DSA Learning Platform</div>
+                <div className="font-semibold">C Programming Platform</div>
                 <div className="text-sm text-muted-foreground">Manav Rachna University</div>
               </div>
             </div>

@@ -169,7 +169,7 @@ export default async function StudentDashboardPage() {
                 </div>
                 <CardTitle className="text-lg">Continue Learning</CardTitle>
                 <CardDescription>
-                  Pick up where you left off with DSA topics
+                  Pick up where you left off with C Programming topics
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -214,7 +214,7 @@ export default async function StudentDashboardPage() {
                     Learning Progress
                   </CardTitle>
                   <CardDescription>
-                    Track your progress across DSA topics
+                    Track your progress across C Programming topics
                   </CardDescription>
                 </div>
                 <Link href="/student/learn">

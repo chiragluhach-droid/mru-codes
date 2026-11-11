@@ -1,22 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { roleForEmail } from "@/lib/faculty";
 
 const SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
 type UserRole = "student" | "teacher";
-
-function getUserRole(
-  profileRole: string | null | undefined,
-  metadataRole: unknown
-): UserRole {
-  if (profileRole === "teacher" || profileRole === "student") {
-    return profileRole;
-  }
-  if (metadataRole === "teacher" || metadataRole === "student") {
-    return metadataRole;
-  }
-  return "student";
-}
 
 function getDashboardPath(role: UserRole): string {
   return role === "teacher" ? "/teacher/dashboard" : "/student/dashboard";
@@ -82,7 +70,11 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && !isAuthPage && !isPublicPage && pathname !== "/") {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = isTeacherRoute
+      ? "/login/teacher"
+      : isStudentRoute
+        ? "/login/student"
+        : "/login";
     return NextResponse.redirect(url);
   }
 
@@ -90,14 +82,8 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  const metaRole = (user.user_metadata as { role?: unknown } | null)?.role;
-  const userRole = getUserRole(profile?.role, metaRole);
+  // Teachers are exactly the emails on the faculty list (lib/faculty.ts).
+  const userRole: UserRole = roleForEmail(user.email);
   const dashboardPath = getDashboardPath(userRole);
 
   // If already signed in and on landing page, go straight to dashboard
