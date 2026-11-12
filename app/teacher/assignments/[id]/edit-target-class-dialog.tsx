@@ -21,11 +21,14 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import {
+  BATCH_SECTION_FORMAT_MESSAGE,
+  BATCH_SECTION_LABEL,
   DEPARTMENT_OPTIONS,
-  SECTION_OPTIONS,
   departmentRequiresSection,
+  isValidBatchSection,
   type Department,
 } from "@/lib/departments";
+import { BatchSectionInput } from "@/components/batch-section-input";
 import toast from "react-hot-toast";
 
 interface EditTargetClassDialogProps {
@@ -58,8 +61,8 @@ export function EditTargetClassDialog({
       return;
     }
 
-    if (requiresSection && !section) {
-      toast.error("Please select target section");
+    if (requiresSection && !isValidBatchSection(section)) {
+      toast.error(BATCH_SECTION_FORMAT_MESSAGE);
       return;
     }
 
@@ -114,7 +117,7 @@ export function EditTargetClassDialog({
         <DialogHeader>
           <DialogTitle>Edit Target Class</DialogTitle>
           <DialogDescription>
-            Update the department and section who can view this assignment.
+            Update the department and batch/section who can view this assignment.
           </DialogDescription>
         </DialogHeader>
 
@@ -146,23 +149,13 @@ export function EditTargetClassDialog({
 
           {requiresSection && (
             <div className="space-y-2">
-              <Label htmlFor="targetSection">Target Section</Label>
-              <Select
+              <Label htmlFor="targetSection">Target {BATCH_SECTION_LABEL}</Label>
+              <BatchSectionInput
+                id="targetSection"
                 value={section}
-                onValueChange={setSection}
+                onChange={setSection}
                 disabled={saving}
-              >
-                <SelectTrigger id="targetSection">
-                  <SelectValue placeholder="Select section" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SECTION_OPTIONS.map((item) => (
-                    <SelectItem key={item} value={item}>
-                      Section {item}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
           )}
 

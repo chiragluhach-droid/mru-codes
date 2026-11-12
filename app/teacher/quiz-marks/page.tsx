@@ -340,10 +340,10 @@ export default function QuizMarksPage() {
                 </div>
                 <Select value={selectedSection} onValueChange={setSelectedSection}>
                   <SelectTrigger className="w-full sm:w-[200px]">
-                    <SelectValue placeholder="All Sections" />
+                    <SelectValue placeholder="All Batch/Sections" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Sections</SelectItem>
+                    <SelectItem value="all">All Batch/Sections</SelectItem>
                     {results.sections.map((section) => (
                       <SelectItem key={section.section} value={section.section}>
                         {section.department
@@ -389,7 +389,7 @@ export default function QuizMarksPage() {
                       <div>
                         <CardTitle className="flex items-center gap-2">
                           <Users className="h-5 w-5 text-primary" />
-                          Section: {section.section}
+                          Batch/Section: {section.section}
                           {section.department && (
                             <Badge variant="outline" className="ml-2">
                               {section.department}

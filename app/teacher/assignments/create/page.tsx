@@ -35,11 +35,14 @@ import { FileUpload } from "@/components/ui/file-upload";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import {
+  BATCH_SECTION_FORMAT_MESSAGE,
+  BATCH_SECTION_LABEL,
   DEPARTMENT_OPTIONS,
-  SECTION_OPTIONS,
   departmentRequiresSection,
+  isValidBatchSection,
   type Department,
 } from "@/lib/departments";
+import { BatchSectionInput } from "@/components/batch-section-input";
 
 const assignmentSchema = z
   .object({
@@ -55,11 +58,11 @@ const assignmentSchema = z
   })
   .refine((data) => {
     if (departmentRequiresSection(data.targetDepartment as Department)) {
-      return Boolean(data.targetSection && data.targetSection.trim().length > 0);
+      return isValidBatchSection(data.targetSection);
     }
     return true;
   }, {
-    message: "Section is required for this department",
+    message: BATCH_SECTION_FORMAT_MESSAGE,
     path: ["targetSection"],
   });
 
@@ -337,26 +340,16 @@ export default function CreateAssignmentPage() {
                 {departmentRequiresSection(targetDepartment as Department) && (
                   <div className="space-y-2">
                     <Label htmlFor="targetSection">
-                      Target Section <span className="text-destructive">*</span>
+                      Target {BATCH_SECTION_LABEL} <span className="text-destructive">*</span>
                     </Label>
-                    <Select
-                      value={watch("targetSection")}
-                      onValueChange={(value) =>
+                    <BatchSectionInput
+                      id="targetSection"
+                      value={watch("targetSection") ?? ""}
+                      onChange={(value) =>
                         setValue("targetSection", value, { shouldValidate: true })
                       }
                       disabled={isLoading}
-                    >
-                      <SelectTrigger id="targetSection">
-                        <SelectValue placeholder="Select section" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {SECTION_OPTIONS.map((section) => (
-                          <SelectItem key={section} value={section}>
-                            Section {section}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
                     {errors.targetSection && (
                       <p className="text-sm text-destructive">
                         {errors.targetSection.message}

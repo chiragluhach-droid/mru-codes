@@ -109,7 +109,7 @@ export async function GET(
     for (const session of sessions) {
       for (const participant of session.participants) {
         const student = participant.student;
-        const sectionKey = student.section || "No Section";
+        const sectionKey = student.section || "No Batch/Section";
         const department = student.department || null;
 
         // Get all submissions for this student in this session

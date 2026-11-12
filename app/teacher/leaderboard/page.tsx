@@ -294,7 +294,7 @@ export default async function TeacherLeaderboardPage() {
                 return (
                   <Card key={key} className="border-border/50">
                     <CardHeader>
-                      <CardTitle>{dept} • Section {sec}</CardTitle>
+                      <CardTitle>{dept} • {sec}</CardTitle>
                       <CardDescription>
                         Top students in this section (showing up to 10)
                       </CardDescription>

@@ -24,7 +24,13 @@ import {
 } from "@/components/ui/select";
 import toast from "react-hot-toast";
 import type { Department } from "@/lib/departments";
-import { DEPARTMENT_OPTIONS, SECTION_OPTIONS, departmentRequiresSection } from "@/lib/departments";
+import {
+  BATCH_SECTION_LABEL,
+  DEPARTMENT_OPTIONS,
+  departmentRequiresSection,
+  isValidBatchSection,
+} from "@/lib/departments";
+import { BatchSectionInput } from "@/components/batch-section-input";
 
 export default function ExportReportsPage() {
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
@@ -45,7 +51,7 @@ export default function ExportReportsPage() {
         params.append("department", selectedDepartment);
       }
       if (
-        selectedSection !== "all" &&
+        isValidBatchSection(selectedSection) &&
         departmentRequiresSection(selectedDepartment as Department)
       ) {
         params.append("section", selectedSection);
@@ -78,7 +84,7 @@ export default function ExportReportsPage() {
       const timestamp = new Date().toISOString().split("T")[0];
       const deptPart = selectedDepartment !== "all" ? `-${selectedDepartment}` : "";
       const sectionPart =
-        selectedSection !== "all" &&
+        isValidBatchSection(selectedSection) &&
         departmentRequiresSection(selectedDepartment as Department)
           ? `-${selectedSection}`
           : "";
@@ -193,23 +199,18 @@ export default function ExportReportsPage() {
               </Select>
             </div>
 
-            {/* Section Filter (CSE/AIML only) */}
+            {/* Batch/Section Filter */}
             {departmentRequiresSection(selectedDepartment as Department) && (
               <div className="space-y-2">
-                <Label>Section</Label>
-                <Select value={selectedSection} onValueChange={setSelectedSection}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All Sections" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Sections</SelectItem>
-                    {SECTION_OPTIONS.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        Section {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="exportSection">{BATCH_SECTION_LABEL}</Label>
+                <BatchSectionInput
+                  id="exportSection"
+                  value={selectedSection === "all" ? "" : selectedSection}
+                  onChange={(value) => setSelectedSection(value || "all")}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Leave empty to include every batch/section.
+                </p>
               </div>
             )}
 

@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProfile } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import { departmentRequiresSection, type Department } from "@/lib/departments";
+import {
+  BATCH_SECTION_FORMAT_MESSAGE,
+  departmentRequiresSection,
+  isValidBatchSection,
+  normalizeBatchSection,
+  type Department,
+} from "@/lib/departments";
 
 function hasClassAccess(
   assignment: { targetDepartment: string | null; targetSection: string | null },
@@ -140,7 +146,7 @@ export async function PATCH(
       typeof targetDepartment === "string" ? targetDepartment.trim() : undefined;
     const normalizedSection =
       typeof targetSection === "string" && targetSection.trim().length > 0
-        ? targetSection.trim()
+        ? normalizeBatchSection(targetSection)
         : null;
 
     if (normalizedDepartment !== undefined) {
@@ -153,10 +159,10 @@ export async function PATCH(
 
       if (
         departmentRequiresSection(normalizedDepartment as Department) &&
-        !normalizedSection
+        !isValidBatchSection(normalizedSection)
       ) {
         return NextResponse.json(
-          { error: "Target section is required for this department" },
+          { error: `Target batch/section is required. ${BATCH_SECTION_FORMAT_MESSAGE}` },
           { status: 400 }
         );
       }

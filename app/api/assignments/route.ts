@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getProfile } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { AssignmentStatus } from "@prisma/client";
-import { departmentRequiresSection, type Department } from "@/lib/departments";
+import {
+  BATCH_SECTION_FORMAT_MESSAGE,
+  departmentRequiresSection,
+  isValidBatchSection,
+  normalizeBatchSection,
+  type Department,
+} from "@/lib/departments";
 
 // GET /api/assignments - Get all assignments (for teachers) or published assignments (for students)
 export async function GET(request: NextRequest) {
@@ -136,7 +142,7 @@ export async function POST(request: NextRequest) {
       typeof targetDepartment === "string" ? targetDepartment.trim() : "";
     const normalizedSection =
       typeof targetSection === "string" && targetSection.trim().length > 0
-        ? targetSection.trim()
+        ? normalizeBatchSection(targetSection)
         : null;
 
     if (!normalizedDepartment) {
@@ -146,9 +152,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (departmentRequiresSection(normalizedDepartment as Department) && !normalizedSection) {
+    if (
+      departmentRequiresSection(normalizedDepartment as Department) &&
+      !isValidBatchSection(normalizedSection)
+    ) {
       return NextResponse.json(
-        { error: "Target section is required for this department" },
+        { error: `Target batch/section is required. ${BATCH_SECTION_FORMAT_MESSAGE}` },
         { status: 400 }
       );
     }

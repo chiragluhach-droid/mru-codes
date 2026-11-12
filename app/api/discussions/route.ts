@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProfile } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import { departmentRequiresSection, type Department } from "@/lib/departments";
+import {
+  BATCH_SECTION_FORMAT_MESSAGE,
+  departmentRequiresSection,
+  isValidBatchSection,
+  normalizeBatchSection,
+  type Department,
+} from "@/lib/departments";
 
 function buildStudentScope(profile: { department: string | null; section: string | null }) {
   const department = profile.department?.trim() || null;
@@ -85,7 +91,7 @@ export async function POST(request: NextRequest) {
     const requestedDepartment =
       typeof body.targetDepartment === "string" ? body.targetDepartment.trim() : "";
     const requestedSection =
-      typeof body.targetSection === "string" ? body.targetSection.trim() : "";
+      typeof body.targetSection === "string" ? normalizeBatchSection(body.targetSection) : "";
 
     if (!title || !content) {
       return NextResponse.json(
@@ -116,9 +122,14 @@ export async function POST(request: NextRequest) {
       !targetSection
     ) {
       return NextResponse.json(
-        { error: "Section is required for the selected department" },
+        { error: "Batch/section is required for the selected department" },
         { status: 400 }
       );
+    }
+
+    // Students post to their own class; teachers must type a valid batch/section.
+    if (profile.role !== "student" && targetSection && !isValidBatchSection(targetSection)) {
+      return NextResponse.json({ error: BATCH_SECTION_FORMAT_MESSAGE }, { status: 400 });
     }
 
     const thread = await prisma.discussionThread.create({

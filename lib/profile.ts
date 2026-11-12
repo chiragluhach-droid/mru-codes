@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import type { User } from "@supabase/supabase-js";
 import { facultyName, roleForEmail } from "@/lib/faculty";
+import { normalizeBatchSection } from "@/lib/departments";
 
 function pickString(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
@@ -22,7 +23,7 @@ export async function getOrCreateProfileForSupabaseUser(user: User) {
   const fullName = facultyName(email) || getNameFromMetadata(meta, user.email);
   const rollNumber = pickString(meta?.roll_number) || pickString(meta?.rollNumber);
   const department = pickString(meta?.department);
-  const section = pickString(meta?.section);
+  const section = pickString(meta?.section) ? normalizeBatchSection(pickString(meta?.section)) : null;
   // The role is never taken from signup metadata: only emails on the faculty
   // list are teachers (see lib/faculty.ts).
   const role = roleForEmail(email);

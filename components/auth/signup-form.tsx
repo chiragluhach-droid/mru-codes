@@ -27,12 +27,14 @@ import {
 } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
-import type { Department } from "@/lib/departments";
 import {
-  SECTION_OPTIONS,
+  BATCH_SECTION_FORMAT_MESSAGE,
+  BATCH_SECTION_LABEL,
   departmentOptionsForRole,
-  roleRequiresSection,
+  isValidBatchSection,
+  normalizeBatchSection,
 } from "@/lib/departments";
+import { BatchSectionInput } from "@/components/batch-section-input";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { dashboardPath, loginPath } from "@/lib/auth-roles";
 import { isTeacherEmail } from "@/lib/faculty";
@@ -50,20 +52,11 @@ const signupSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
   rollNumber: z.string().optional(),
   department: z.string().min(1, "Department is required"),
-  section: z.string().optional(),
+  section: z.string().refine(isValidBatchSection, BATCH_SECTION_FORMAT_MESSAGE),
   role: z.enum(["student", "teacher"]),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
-}).refine((data) => {
-  // Section required only for students in CSE/AIML. Teachers never pick one.
-  if (roleRequiresSection(data.role, data.department as Department)) {
-    return Boolean(data.section && data.section.trim().length > 0);
-  }
-  return true;
-}, {
-  message: "Section is required for CSE/AIML",
-  path: ["section"],
 });
 
 type SignupFormData = z.infer<typeof signupSchema>;
@@ -131,7 +124,7 @@ export function SignupForm() {
             full_name: data.fullName,
             roll_number: data.rollNumber,
             department: data.department,
-            section: data.section,
+            section: normalizeBatchSection(data.section),
             role,
           },
         },
@@ -292,12 +285,7 @@ export function SignupForm() {
               </Label>
               <Select
                 value={selectedDepartment}
-                onValueChange={(value) => {
-                  setValue("department", value, { shouldValidate: true });
-                  if (!roleRequiresSection(role, value as Department)) {
-                    setValue("section", "", { shouldValidate: true });
-                  }
-                }}
+                onValueChange={(value) => setValue("department", value, { shouldValidate: true })}
                 disabled={isLoading}
               >
                 <SelectTrigger className="h-11 bg-background/50 border-border/50">
@@ -327,31 +315,19 @@ export function SignupForm() {
               />
             </div>
 
-            {/* Section (CSE/AIML only) */}
-            {roleRequiresSection(role, selectedDepartment as Department) && (
-              <div className="space-y-2">
-                <Label htmlFor="section">Section</Label>
-                <Select
-                  value={watch("section")}
-                  onValueChange={(value) => setValue("section", value, { shouldValidate: true })}
-                  disabled={isLoading}
-                >
-                  <SelectTrigger className="h-11 bg-background/50 border-border/50">
-                    <SelectValue placeholder="Select section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SECTION_OPTIONS.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        Section {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.section && (
-                  <p className="text-sm text-destructive">{errors.section.message}</p>
-                )}
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="section">{BATCH_SECTION_LABEL}</Label>
+              <BatchSectionInput
+                id="section"
+                value={watch("section")}
+                onChange={(value) => setValue("section", value, { shouldValidate: true })}
+                disabled={isLoading}
+                className="h-11 bg-background/50 border-border/50"
+              />
+              {errors.section && (
+                <p className="text-sm text-destructive">{errors.section.message}</p>
+              )}
+            </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 pt-2">
             <Button

@@ -98,7 +98,7 @@ export default async function StudentLeaderboardPage() {
           <TabsTrigger value="global">Global Rankings</TabsTrigger>
           {profile.department && profile.section && (
             <TabsTrigger value="section">
-              {profile.department} • Section {profile.section}
+              {profile.department} • {profile.section}
             </TabsTrigger>
           )}
         </TabsList>
@@ -213,7 +213,7 @@ export default async function StudentLeaderboardPage() {
               <CardHeader>
                 <CardTitle>Section Rankings</CardTitle>
                 <CardDescription>
-                  Rankings for {profile.department} • Section {profile.section}
+                  Rankings for {profile.department} • {profile.section}
                 </CardDescription>
               </CardHeader>
               <CardContent>

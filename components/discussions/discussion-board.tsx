@@ -39,10 +39,13 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import toast from "react-hot-toast";
+import { BatchSectionInput } from "@/components/batch-section-input";
 import {
+  BATCH_SECTION_FORMAT_MESSAGE,
+  BATCH_SECTION_LABEL,
   DEPARTMENT_OPTIONS,
-  SECTION_OPTIONS,
   departmentRequiresSection,
+  isValidBatchSection,
   formatDepartmentSection,
   type Department,
 } from "@/lib/departments";
@@ -141,7 +144,7 @@ export function DiscussionBoard({
       if (role === "teacher" && createForm.targetDepartment) {
         params.set("department", createForm.targetDepartment);
       }
-      if (role === "teacher" && createForm.targetSection) {
+      if (role === "teacher" && isValidBatchSection(createForm.targetSection)) {
         params.set("section", createForm.targetSection);
       }
       const query = params.toString();
@@ -209,8 +212,8 @@ export function DiscussionBoard({
       toast.error("Please select target department");
       return;
     }
-    if (role === "teacher" && requiresSection && !createForm.targetSection) {
-      toast.error("Please select target section");
+    if (role === "teacher" && requiresSection && !isValidBatchSection(createForm.targetSection)) {
+      toast.error(BATCH_SECTION_FORMAT_MESSAGE);
       return;
     }
 
@@ -398,24 +401,14 @@ export function DiscussionBoard({
 
                   {requiresSection && (
                     <div className="space-y-2">
-                      <Label htmlFor="discussion-section">Target Section</Label>
-                      <Select
+                      <Label htmlFor="discussion-section">Target {BATCH_SECTION_LABEL}</Label>
+                      <BatchSectionInput
+                        id="discussion-section"
                         value={createForm.targetSection}
-                        onValueChange={(value) =>
+                        onChange={(value) =>
                           setCreateForm((prev) => ({ ...prev, targetSection: value }))
                         }
-                      >
-                        <SelectTrigger id="discussion-section">
-                          <SelectValue placeholder="Select section" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SECTION_OPTIONS.map((section) => (
-                            <SelectItem key={section} value={section}>
-                              Section {section}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      />
                     </div>
                   )}
                 </div>

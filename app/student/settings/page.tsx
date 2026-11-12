@@ -30,8 +30,14 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useUser } from "@/providers/user-provider";
 import toast from "react-hot-toast";
-import type { Department } from "@/lib/departments";
-import { DEPARTMENT_OPTIONS, SECTION_OPTIONS, departmentRequiresSection } from "@/lib/departments";
+import {
+  BATCH_SECTION_FORMAT_MESSAGE,
+  BATCH_SECTION_LABEL,
+  DEPARTMENT_OPTIONS,
+  isValidBatchSection,
+  normalizeBatchSection,
+} from "@/lib/departments";
+import { BatchSectionInput } from "@/components/batch-section-input";
 import {
   Select,
   SelectContent,
@@ -43,8 +49,8 @@ import {
 const profileSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   rollNumber: z.string().optional().or(z.literal("")),
-  department: z.string().optional().or(z.literal("")),
-  section: z.string().optional().or(z.literal("")),
+  department: z.string().refine((v) => DEPARTMENT_OPTIONS.some((opt) => opt.value === v), "Please select your department"),
+  section: z.string().refine(isValidBatchSection, BATCH_SECTION_FORMAT_MESSAGE),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -107,7 +113,7 @@ export default function StudentSettingsPage() {
           fullName: data.fullName,
           rollNumber: data.rollNumber || null,
           department: data.department || null,
-          section: data.section || null,
+          section: normalizeBatchSection(data.section),
         }),
       });
 
@@ -240,12 +246,9 @@ export default function StudentSettingsPage() {
                   </Label>
                   <Select
                     value={selectedDepartment}
-                    onValueChange={(value) => {
-                      setValue("department", value, { shouldValidate: true });
-                      if (!departmentRequiresSection(value as Department)) {
-                        setValue("section", "", { shouldValidate: true });
-                      }
-                    }}
+                    onValueChange={(value) =>
+                      setValue("department", value, { shouldValidate: true, shouldDirty: true })
+                    }
                     disabled={isLoading}
                   >
                     <SelectTrigger className="h-11">
@@ -259,6 +262,12 @@ export default function StudentSettingsPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.department && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.department.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* Roll Number */}
@@ -287,31 +296,28 @@ export default function StudentSettingsPage() {
 
                 <Separator />
 
-                {/* Section (CSE/AIML only) */}
-                {departmentRequiresSection(selectedDepartment as Department) && (
-                  <div className="space-y-2">
-                    <Label htmlFor="section" className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      Section
-                    </Label>
-                    <Select
-                      value={watch("section")}
-                      onValueChange={(value) => setValue("section", value, { shouldValidate: true })}
-                      disabled={isLoading}
-                    >
-                      <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Select section" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {SECTION_OPTIONS.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            Section {s}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                {/* Batch/Section */}
+                <div className="space-y-2">
+                  <Label htmlFor="section" className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    {BATCH_SECTION_LABEL}
+                  </Label>
+                  <BatchSectionInput
+                    id="section"
+                    value={watch("section") ?? ""}
+                    onChange={(value) =>
+                      setValue("section", value, { shouldValidate: true, shouldDirty: true })
+                    }
+                    disabled={isLoading}
+                    className="h-11"
+                  />
+                  {errors.section && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {errors.section.message}
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
 

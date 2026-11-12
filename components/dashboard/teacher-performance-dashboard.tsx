@@ -531,10 +531,10 @@ export function TeacherPerformanceDashboard() {
 
           <Select value={selectedSection} onValueChange={setSelectedSection}>
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="All Sections" />
+              <SelectValue placeholder="All Batch/Sections" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Sections</SelectItem>
+              <SelectItem value="all">All Batch/Sections</SelectItem>
               {data.sections.map((section) => (
                 <SelectItem key={section} value={section}>
                   {section}
@@ -896,7 +896,7 @@ export function TeacherPerformanceDashboard() {
                             <TableRow>
                               <TableHead>Student</TableHead>
                               <TableHead>Roll No.</TableHead>
-                              <TableHead>Section</TableHead>
+                              <TableHead>Batch/Section</TableHead>
                               <TableHead>Department</TableHead>
                               <TableHead className="text-right">Score</TableHead>
                               <TableHead className="text-right">Accuracy</TableHead>
@@ -936,7 +936,7 @@ export function TeacherPerformanceDashboard() {
                           <TableRow>
                             <TableHead>Student</TableHead>
                             <TableHead>Roll No.</TableHead>
-                            <TableHead>Section</TableHead>
+                            <TableHead>Batch/Section</TableHead>
                             <TableHead>Department</TableHead>
                             <TableHead className="text-right">Score</TableHead>
                             <TableHead className="text-right">Accuracy</TableHead>

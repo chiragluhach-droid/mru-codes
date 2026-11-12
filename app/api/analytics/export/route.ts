@@ -280,7 +280,7 @@ export async function GET(request: NextRequest) {
           { header: "Email", key: "email", width: 30 },
           { header: "Roll Number", key: "roll", width: 14 },
           { header: "Department", key: "dept", width: 16 },
-          { header: "Section", key: "sec", width: 10 },
+          { header: "Batch/Section", key: "sec", width: 10 },
           { header: "Total Score", key: "totalScore", width: 12 },
           { header: "Quizzes Taken", key: "quizzesTaken", width: 12 },
           { header: "Total Sessions", key: "sessions", width: 12 },
@@ -295,7 +295,7 @@ export async function GET(request: NextRequest) {
           { header: "Student Name", key: "name", width: 24 },
           { header: "Email", key: "email", width: 30 },
           { header: "Department", key: "dept", width: 16 },
-          { header: "Section", key: "sec", width: 10 },
+          { header: "Batch/Section", key: "sec", width: 10 },
           { header: "Total Sessions", key: "sessions", width: 14 },
           { header: "Avg Score", key: "avgScore", width: 12 },
           { header: "Avg Accuracy %", key: "avgAcc", width: 14 },
@@ -393,7 +393,7 @@ export async function GET(request: NextRequest) {
           { header: "Email", key: "email", width: 30 },
           { header: "Roll Number", key: "roll", width: 14 },
           { header: "Department", key: "dept", width: 16 },
-          { header: "Section", key: "sec", width: 10 },
+          { header: "Batch/Section", key: "sec", width: 10 },
           { header: "Total Score", key: "totalScore", width: 12 },
           { header: "Total Quiz Taken", key: "totalQuizTaken", width: 16 },
           { header: "Distinct Quizzes", key: "distinctQuizzes", width: 16 },
@@ -529,7 +529,7 @@ export async function GET(request: NextRequest) {
           { header: "Email", key: "email", width: 30 },
           { header: "Roll Number", key: "roll", width: 14 },
           { header: "Department", key: "dept", width: 16 },
-          { header: "Section", key: "sec", width: 10 },
+          { header: "Batch/Section", key: "sec", width: 10 },
           { header: "Session ID", key: "sessionId", width: 38 },
           { header: "Quiz Title", key: "quiz", width: 28 },
           { header: "Topic", key: "topic", width: 16 },
@@ -594,7 +594,7 @@ export async function GET(request: NextRequest) {
           { header: "Email", key: "email", width: 30 },
           { header: "Roll Number", key: "roll", width: 14 },
           { header: "Department", key: "dept", width: 16 },
-          { header: "Section", key: "sec", width: 10 },
+          { header: "Batch/Section", key: "sec", width: 10 },
           { header: "Assignment ID", key: "assignmentId", width: 38 },
           { header: "Assignment Title", key: "title", width: 30 },
           { header: "Topic", key: "topic", width: 18 },
@@ -712,7 +712,7 @@ export async function GET(request: NextRequest) {
             { header: "Student Name", key: "student", width: 22 },
             { header: "Email", key: "email", width: 30 },
             { header: "Department", key: "dept", width: 14 },
-            { header: "Section", key: "sec", width: 10 },
+            { header: "Batch/Section", key: "sec", width: 10 },
             { header: "Session ID", key: "sessionId", width: 38 },
             { header: "Room Code", key: "room", width: 12 },
             { header: "Quiz Title", key: "quiz", width: 28 },
@@ -829,7 +829,7 @@ export async function GET(request: NextRequest) {
           const sheet = workbook.addWorksheet("Section Summary");
           sheet.columns = [
             { header: "Department", key: "dept", width: 14 },
-            { header: "Section", key: "sec", width: 10 },
+            { header: "Batch/Section", key: "sec", width: 10 },
             { header: "Total Students", key: "students", width: 14 },
             { header: "Active Students", key: "active", width: 14 },
             { header: "Average Score", key: "avgScore", width: 14 },
@@ -1023,7 +1023,7 @@ export async function GET(request: NextRequest) {
           "Email": student.email,
           "Roll Number": student.rollNumber || "-",
           "Department": student.department || "-",
-          "Section": student.section || "-",
+          "Batch/Section": student.section || "-",
           "Total Score": student.totalScore,
           "Quizzes Taken": student.quizzesTaken,
           "Average Score": Math.round(avgScore * 100) / 100,
@@ -1045,7 +1045,7 @@ export async function GET(request: NextRequest) {
         "Email": string;
         "Roll Number": string;
         "Department": string;
-        "Section": string;
+        "Batch/Section": string;
         "Quiz Title": string;
         "Topic": string;
         "Difficulty": string;
@@ -1111,7 +1111,7 @@ export async function GET(request: NextRequest) {
             "Email": student.email,
             "Roll Number": student.rollNumber || "-",
             "Department": student.department || "-",
-            "Section": student.section || "-",
+            "Batch/Section": student.section || "-",
             "Quiz Title": participation.session.quiz.title,
             "Topic": participation.session.quiz.topic,
             "Difficulty": participation.session.quiz.difficulty,
@@ -1143,7 +1143,7 @@ export async function GET(request: NextRequest) {
         "Email": string;
         "Roll Number": string;
         "Department": string;
-        "Section": string;
+        "Batch/Section": string;
         "Assignment Title": string;
         "Topic": string;
         "Difficulty": string;
@@ -1192,7 +1192,7 @@ export async function GET(request: NextRequest) {
             "Email": student.email,
             "Roll Number": student.rollNumber || "-",
             "Department": student.department || "-",
-            "Section": student.section || "-",
+            "Batch/Section": student.section || "-",
             "Assignment Title": assignment.assignment.title,
             "Topic": assignment.assignment.topic || "-",
             "Difficulty": assignment.assignment.difficulty,
@@ -1224,7 +1224,7 @@ export async function GET(request: NextRequest) {
         "Email": string;
         "Roll Number": string;
         "Department": string;
-        "Section": string;
+        "Batch/Section": string;
         "Total Sessions": number;
         "Average Score": number;
         "Average Accuracy %": number;
@@ -1312,7 +1312,7 @@ export async function GET(request: NextRequest) {
           "Email": student.email,
           "Roll Number": student.rollNumber || "-",
           "Department": student.department || "-",
-          "Section": student.section || "-",
+          "Batch/Section": student.section || "-",
           "Total Sessions": totalSessions,
           "Average Score": Math.round(avgScore * 100) / 100,
           "Average Accuracy %": Math.round(avgAccuracy * 100) / 100,
@@ -1513,7 +1513,7 @@ export async function GET(request: NextRequest) {
 
       const sectionSummaryData: Array<{
         "Department": string;
-        "Section": string;
+        "Batch/Section": string;
         "Total Students": number;
         "Active Students": number;
         "Average Score": number;
@@ -1607,7 +1607,7 @@ export async function GET(request: NextRequest) {
 
         sectionSummaryData.push({
           "Department": sec.department || "-",
-          "Section": sec.section,
+          "Batch/Section": sec.section,
           "Total Students": secStudents.length,
           "Active Students": activeStudents,
           "Average Score": Math.round(avgScore * 100) / 100,
@@ -1708,7 +1708,7 @@ export async function GET(request: NextRequest) {
       const violationsData: Array<{
         "Student Name": string;
         "Email": string;
-        "Section": string;
+        "Batch/Section": string;
         "Quiz Title": string;
         "Violation Type": string;
         "Violation Count": number;
