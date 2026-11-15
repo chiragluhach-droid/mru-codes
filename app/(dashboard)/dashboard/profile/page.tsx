@@ -58,7 +58,7 @@ export default async function ProfilePage() {
   const profile = await getProfile();
 
   if (!profile) {
-    redirect("/login");
+    redirect("/api/auth/signout");
   }
 
   const initials = profile.fullName

@@ -29,6 +29,7 @@ import {
   type AuthRole,
 } from "@/lib/auth-roles";
 import { roleForEmail } from "@/lib/faculty";
+import { STUDENT_SIGNUP_CLOSED_MESSAGE } from "@/lib/student-allowlist";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -37,7 +38,7 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-export function LoginForm({ role }: { role: AuthRole }) {
+export function LoginForm({ role, notAllowed = false }: { role: AuthRole; notAllowed?: boolean }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -206,6 +207,11 @@ export function LoginForm({ role }: { role: AuthRole }) {
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
+            {notAllowed && !wrongRole && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+                {STUDENT_SIGNUP_CLOSED_MESSAGE}
+              </div>
+            )}
             {wrongRole && (
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
                 {wrongRole === "teacher" ? (

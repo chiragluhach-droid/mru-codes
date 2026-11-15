@@ -12,7 +12,7 @@ export default async function TeacherLayout({
   const profile = await getProfile();
 
   if (!profile) {
-    redirect("/login");
+    redirect("/api/auth/signout");
   }
 
   // Double-check role (middleware should have caught this, but just in case)

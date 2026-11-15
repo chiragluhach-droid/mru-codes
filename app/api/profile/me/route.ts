@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreateProfileForSupabaseUser } from "@/lib/profile";
+import { STUDENT_SIGNUP_CLOSED_MESSAGE } from "@/lib/student-allowlist";
 import prisma from "@/lib/prisma";
 import {
   BATCH_SECTION_FORMAT_MESSAGE,
@@ -20,6 +21,9 @@ export async function GET() {
   }
 
   const profile = await getOrCreateProfileForSupabaseUser(user);
+  if (!profile) {
+    return NextResponse.json({ error: STUDENT_SIGNUP_CLOSED_MESSAGE }, { status: 403 });
+  }
   return NextResponse.json({ profile });
 }
 

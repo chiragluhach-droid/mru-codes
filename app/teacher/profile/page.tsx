@@ -58,7 +58,7 @@ export default async function TeacherProfilePage() {
   const profile = await getProfile();
 
   if (!profile) {
-    redirect("/login");
+    redirect("/api/auth/signout");
   }
 
   if (profile.role !== "teacher") {

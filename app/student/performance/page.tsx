@@ -7,7 +7,7 @@ export default async function StudentPerformancePage() {
   const profile = await getProfile();
 
   if (!profile) {
-    redirect("/login");
+    redirect("/api/auth/signout");
   }
 
   if (profile.role !== "student") {

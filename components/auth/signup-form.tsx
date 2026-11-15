@@ -38,6 +38,7 @@ import { BatchSectionInput } from "@/components/batch-section-input";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { dashboardPath, loginPath } from "@/lib/auth-roles";
 import { isTeacherEmail } from "@/lib/faculty";
+import { STUDENT_SIGNUP_CLOSED_MESSAGE, isAllowedStudentEmail } from "@/lib/student-allowlist";
 
 // Only students sign up. Faculty accounts come from the list in lib/faculty.ts.
 const role = "student";
@@ -46,7 +47,8 @@ const signupSchema = z.object({
   email: z
     .string()
     .email("Please enter a valid email")
-    .refine((email) => !isTeacherEmail(email), "Faculty don't sign up. Please use the teacher login."),
+    .refine((email) => !isTeacherEmail(email), "Faculty don't sign up. Please use the teacher login.")
+    .refine(isAllowedStudentEmail, STUDENT_SIGNUP_CLOSED_MESSAGE),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string().min(6, "Please confirm your password"),
   fullName: z.string().min(2, "Name must be at least 2 characters"),
@@ -206,13 +208,13 @@ export function SignupForm() {
               <Input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="name_26@mru.ac.in"
                 className="h-11 bg-background/50 border-border/50"
                 {...register("email")}
                 disabled={isLoading}
               />
               <p className="text-xs text-muted-foreground">
-                Enter your email address
+                Use your university email. Only 2026 batch students can sign up.
               </p>
               {errors.email && (
                 <p className="text-sm text-destructive">{errors.email.message}</p>

@@ -140,7 +140,7 @@ export default async function StudentAssignmentsPage() {
   const profile = await getProfile();
 
   if (!profile) {
-    redirect("/login");
+    redirect("/api/auth/signout");
   }
 
   if (profile.role !== "student") {

@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import type { User } from "@supabase/supabase-js";
 import { facultyName, roleForEmail } from "@/lib/faculty";
 import { normalizeBatchSection } from "@/lib/departments";
+import { isAllowedStudentEmail } from "@/lib/student-allowlist";
 
 function pickString(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
@@ -16,6 +17,12 @@ function getNameFromMetadata(meta: Record<string, unknown> | null | undefined, e
   );
 }
 
+/**
+ * Returns the user's profile, creating it on first login. Returns null when a
+ * new student is not on the 2026-batch list: they cannot get an account, even
+ * if they created an auth user by calling Supabase directly. Students who
+ * already have a profile keep it.
+ */
 export async function getOrCreateProfileForSupabaseUser(user: User) {
   const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
 
@@ -27,6 +34,11 @@ export async function getOrCreateProfileForSupabaseUser(user: User) {
   // The role is never taken from signup metadata: only emails on the faculty
   // list are teachers (see lib/faculty.ts).
   const role = roleForEmail(email);
+
+  if (role === "student" && !isAllowedStudentEmail(email)) {
+    const existing = await prisma.profile.findUnique({ where: { id: user.id } });
+    if (!existing) return null;
+  }
 
   return prisma.profile.upsert({
     where: { id: user.id },

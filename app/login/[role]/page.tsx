@@ -8,11 +8,14 @@ export function generateStaticParams() {
 
 export default async function RoleLoginPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ role: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const { role } = await params;
   if (!isAuthRole(role)) notFound();
+  const { error } = await searchParams;
 
-  return <LoginForm role={role} />;
+  return <LoginForm role={role} notAllowed={error === "not-allowed"} />;
 }

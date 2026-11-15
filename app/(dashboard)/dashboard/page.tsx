@@ -7,7 +7,7 @@ export default async function DashboardPage() {
   const profile = await getProfile();
 
   if (!profile) {
-    redirect("/login");
+    redirect("/api/auth/signout");
   }
 
   // Transform Prisma profile to match component props
