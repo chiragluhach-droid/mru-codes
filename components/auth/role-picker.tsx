@@ -39,7 +39,7 @@ export function RolePicker() {
       </Card>
 
       <p className="text-center text-sm text-muted-foreground mt-6">
-        New student?{" "}
+        Don&apos;t have an account?{" "}
         <Link
           href={signupPath("student")}
           className="font-medium text-primary hover:text-primary/80 transition-colors underline-offset-4 hover:underline"

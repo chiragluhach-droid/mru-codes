@@ -1,10 +1,5 @@
 export type StudentDepartment = "CSE" | "AIML" | "FSD" | "GenAI" | "Core";
-export type TeacherDepartment =
-  | "CST"
-  | "Mechanical Engineering"
-  | "ECE"
-  | "Robotics & AI"
-  | "BCA";
+export type TeacherDepartment = "CST" | "ECE" | "ME" | "R&AI";
 
 export type Department = StudentDepartment | TeacherDepartment;
 
@@ -24,10 +19,9 @@ export function isStudentDepartment(value: unknown): value is StudentDepartment 
 /** Departments a teacher can belong to. Teachers are never tied to a section. */
 export const TEACHER_DEPARTMENT_OPTIONS: Array<{ value: TeacherDepartment; label: string }> = [
   { value: "CST", label: "CST" },
-  { value: "Mechanical Engineering", label: "Mechanical Engineering" },
   { value: "ECE", label: "ECE" },
-  { value: "Robotics & AI", label: "Robotics & AI" },
-  { value: "BCA", label: "BCA" },
+  { value: "ME", label: "ME" },
+  { value: "R&AI", label: "R&AI" },
 ];
 
 /**

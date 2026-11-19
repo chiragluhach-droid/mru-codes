@@ -17,7 +17,6 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 
 const forgotPasswordSchema = z.object({
@@ -29,7 +28,6 @@ type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 export default function ForgotPasswordPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
-    const supabase = createClient();
 
     const {
         register,
@@ -44,12 +42,15 @@ export default function ForgotPasswordPage() {
         setIsLoading(true);
 
         try {
-            const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-                redirectTo: `${window.location.origin}/reset-password`,
+            // Sent from the server so the link works on any device.
+            const response = await fetch("/api/auth/forgot-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: data.email }),
             });
-
-            if (error) {
-                toast.error(error.message);
+            if (!response.ok) {
+                const result = await response.json().catch(() => ({}));
+                toast.error(result.error || "Could not send the email. Please try again.");
                 return;
             }
 

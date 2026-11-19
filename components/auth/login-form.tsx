@@ -30,6 +30,12 @@ import {
 } from "@/lib/auth-roles";
 import { roleForEmail } from "@/lib/faculty";
 import { STUDENT_SIGNUP_CLOSED_MESSAGE } from "@/lib/student-allowlist";
+import {
+  AuthNoticeDialog,
+  rememberEmail,
+  takeRememberedEmail,
+  type AuthNotice,
+} from "@/components/auth/auth-notice-dialog";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -45,7 +51,7 @@ export function LoginForm({ role, notAllowed = false }: { role: AuthRole; notAll
   const [showResendPrompt, setShowResendPrompt] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState("");
   const [resending, setResending] = useState(false);
-  const [wrongRole, setWrongRole] = useState<AuthRole | null>(null);
+  const [notice, setNotice] = useState<AuthNotice | null>(null);
   const otherRole: AuthRole = role === "teacher" ? "student" : "teacher";
   const router = useRouter();
   const supabase = createClient();
@@ -70,10 +76,17 @@ export function LoginForm({ role, notAllowed = false }: { role: AuthRole; notAll
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
+
+  // Keep the email typed on the other login page when a notice switched pages.
+  useEffect(() => {
+    const email = takeRememberedEmail();
+    if (email) setValue("email", email);
+  }, [setValue]);
 
   const handleResendVerification = async () => {
     if (!unverifiedEmail || resending) return;
@@ -99,18 +112,26 @@ export function LoginForm({ role, notAllowed = false }: { role: AuthRole; notAll
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
-    setWrongRole(null);
 
     // Teachers are exactly the faculty list, so the role is known from the
     // email alone and each login page only admits its own role.
     const accountRole = roleForEmail(data.email);
     if (accountRole !== role) {
-      toast.error(
+      rememberEmail(data.email);
+      setNotice(
         role === "teacher"
-          ? "This email is not on the faculty list."
-          : "This is a faculty email. Please use the teacher login."
+          ? {
+              title: "This email isn't registered as a teacher",
+              description:
+                "Only faculty on the official list can log in as a teacher. If you're a student, use the student login.",
+              action: { label: "Go to student login", href: loginPath("student") },
+            }
+          : {
+              title: "This is a teacher account",
+              description: "This email belongs to a faculty member. Please use the teacher login.",
+              action: { label: "Go to teacher login", href: loginPath("teacher") },
+            }
       );
-      setWrongRole(accountRole);
       setIsLoading(false);
       return;
     }
@@ -129,6 +150,17 @@ export function LoginForm({ role, notAllowed = false }: { role: AuthRole; notAll
           toast.error("Email not verified. Please check your inbox or resend the verification link.");
           setUnverifiedEmail(data.email);
           setShowResendPrompt(true);
+        } else if (error.message?.toLowerCase().includes("invalid login credentials")) {
+          setNotice({
+            title: "Incorrect email or password",
+            description:
+              "Check your email and password and try again. If you don't have an account yet, create one; if you forgot your password, reset it.",
+            tone: "info",
+            action: { label: "Reset password", href: "/forgot-password" },
+            secondaryAction: { label: "Create account", href: signupPath(role) },
+          });
+        } else if (error.status === 429) {
+          toast.error("Too many attempts. Please wait a few minutes and try again.");
         } else {
           toast.error(error.message);
         }
@@ -207,35 +239,9 @@ export function LoginForm({ role, notAllowed = false }: { role: AuthRole; notAll
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
-            {notAllowed && !wrongRole && (
+            {notAllowed && (
               <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
                 {STUDENT_SIGNUP_CLOSED_MESSAGE}
-              </div>
-            )}
-            {wrongRole && (
-              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm">
-                {wrongRole === "teacher" ? (
-                  <>
-                    This is a faculty email.{" "}
-                    <Link
-                      href={loginPath("teacher")}
-                      className="font-medium text-primary underline-offset-4 hover:underline"
-                    >
-                      Go to teacher login
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    Only faculty on the official list can log in here. Students,{" "}
-                    <Link
-                      href={loginPath("student")}
-                      className="font-medium text-primary underline-offset-4 hover:underline"
-                    >
-                      use the student login
-                    </Link>
-                    .
-                  </>
-                )}
               </div>
             )}
             <div className="space-y-2">
@@ -263,7 +269,7 @@ export function LoginForm({ role, notAllowed = false }: { role: AuthRole; notAll
                   Password
                 </Label>
                 <Link
-                  href={role === "teacher" ? `${loginPath("teacher")}/setup` : "/forgot-password"}
+                  href="/forgot-password"
                   className="text-xs text-muted-foreground hover:text-primary transition-colors"
                 >
                   Forgot password?
@@ -327,27 +333,15 @@ export function LoginForm({ role, notAllowed = false }: { role: AuthRole; notAll
                 </span>
               </div>
             </div>
-            {role === "teacher" ? (
-              <p className="text-center text-sm text-muted-foreground">
-                First time logging in?{" "}
-                <Link
-                  href={`${loginPath("teacher")}/setup`}
-                  className="font-medium text-primary hover:text-primary/80 transition-colors underline-offset-4 hover:underline"
-                >
-                  Set your password
-                </Link>
-              </p>
-            ) : (
-              <p className="text-center text-sm text-muted-foreground">
-                Don&apos;t have an account?{" "}
-                <Link
-                  href={signupPath("student")}
-                  className="font-medium text-primary hover:text-primary/80 transition-colors underline-offset-4 hover:underline"
-                >
-                  Create an Account
-                </Link>
-              </p>
-            )}
+            <p className="text-center text-sm text-muted-foreground">
+              Don&apos;t have an account?{" "}
+              <Link
+                href={signupPath(role)}
+                className="font-medium text-primary hover:text-primary/80 transition-colors underline-offset-4 hover:underline"
+              >
+                Create an Account
+              </Link>
+            </p>
           </CardFooter>
         </form>
 
@@ -403,6 +397,7 @@ export function LoginForm({ role, notAllowed = false }: { role: AuthRole; notAll
           Privacy Policy
         </Link>
       </p>
+      <AuthNoticeDialog notice={notice} onClose={() => setNotice(null)} />
     </AuthShell>
   );
 }

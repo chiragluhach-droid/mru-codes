@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Sparkles, ArrowRight, Eye, EyeOff, Building2 } from "lucide-react";
+import { Loader2, Sparkles, ArrowRight, Eye, EyeOff, Building2, User, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,34 +36,77 @@ import {
 } from "@/lib/departments";
 import { BatchSectionInput } from "@/components/batch-section-input";
 import { AuthShell } from "@/components/auth/auth-shell";
-import { dashboardPath, loginPath } from "@/lib/auth-roles";
+import { dashboardPath, loginPath, signupPath, type AuthRole } from "@/lib/auth-roles";
 import { isTeacherEmail } from "@/lib/faculty";
 import { STUDENT_SIGNUP_CLOSED_MESSAGE, isAllowedStudentEmail } from "@/lib/student-allowlist";
+import { cn } from "@/lib/utils";
+import {
+  AuthNoticeDialog,
+  rememberEmail,
+  takeRememberedEmail,
+  type AuthNotice,
+} from "@/components/auth/auth-notice-dialog";
 
-// Only students sign up. Faculty accounts come from the list in lib/faculty.ts.
-const role = "student";
+/**
+ * Which account type an email may create, or a pop-up explaining why not.
+ * Teachers are exactly the faculty list; students are the 2026-batch list.
+ */
+function signupNotice(role: AuthRole, email: string): AuthNotice | null {
+  if (role === "teacher") {
+    if (isTeacherEmail(email)) return null;
+    return {
+      title: "This email isn't registered as a teacher",
+      description: isAllowedStudentEmail(email)
+        ? "This is a student email. Teacher accounts can only be created with an official faculty email. Create a student account instead."
+        : "Teacher accounts can only be created with an official faculty email on the list. If you're faculty and think this is a mistake, contact the admin.",
+      action: isAllowedStudentEmail(email) ? { label: "Create student account", href: signupPath("student") } : undefined,
+    };
+  }
+  if (isTeacherEmail(email)) {
+    return {
+      title: "This is a faculty email",
+      description: "Faculty can't create a student account. Create a teacher account instead.",
+      action: { label: "Create teacher account", href: signupPath("teacher") },
+    };
+  }
+  if (!isAllowedStudentEmail(email)) {
+    return { title: "Email not on the 2026 batch list", description: STUDENT_SIGNUP_CLOSED_MESSAGE };
+  }
+  return null;
+}
 
-const signupSchema = z.object({
-  email: z
-    .string()
-    .email("Please enter a valid email")
-    .refine((email) => !isTeacherEmail(email), "Faculty don't sign up. Please use the teacher login.")
-    .refine(isAllowedStudentEmail, STUDENT_SIGNUP_CLOSED_MESSAGE),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string().min(6, "Please confirm your password"),
-  fullName: z.string().min(2, "Name must be at least 2 characters"),
-  rollNumber: z.string().optional(),
-  department: z.string().min(1, "Department is required"),
-  section: z.string().refine(isValidBatchSection, BATCH_SECTION_FORMAT_MESSAGE),
-  role: z.enum(["student", "teacher"]),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+const signupSchema = z
+  .object({
+    email: z.string().email("Please enter a valid email"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string().min(6, "Please confirm your password"),
+    fullName: z.string().min(2, "Name must be at least 2 characters"),
+    rollNumber: z.string().optional(),
+    department: z.string().min(1, "Department is required"),
+    section: z.string().optional(),
+    role: z.enum(["student", "teacher"]),
+  })
+  .superRefine((data, ctx) => {
+    if (data.password !== data.confirmPassword) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["confirmPassword"], message: "Passwords don't match" });
+    }
+    // Which emails may sign up for which role is checked on submit (signupNotice).
+    if (data.role === "student" && !isValidBatchSection(data.section)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["section"], message: BATCH_SECTION_FORMAT_MESSAGE });
+    }
+  });
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
-export function SignupForm() {
+const ROLE_TABS: Array<{ role: AuthRole; label: string; Icon: typeof User }> = [
+  { role: "student", label: "Student", Icon: User },
+  { role: "teacher", label: "Teacher", Icon: GraduationCap },
+];
+
+/** Signup for /signup/student and /signup/teacher; the toggle switches between them. */
+export function SignupForm({ role }: { role: AuthRole }) {
+  const isTeacher = role === "teacher";
+  const [notice, setNotice] = useState<AuthNotice | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -110,10 +153,31 @@ export function SignupForm() {
     },
   });
 
+  // Keep the email typed on the other form when a notice switched pages.
+  useEffect(() => {
+    const email = takeRememberedEmail();
+    if (email) setValue("email", email, { shouldValidate: true });
+  }, [setValue]);
+
   const selectedDepartment = watch("department");
   const departmentOptions = departmentOptionsForRole(role);
 
   const onSubmit = async (data: SignupFormData) => {
+    const mismatch = signupNotice(role, data.email);
+    if (mismatch) {
+      rememberEmail(data.email);
+      setNotice(mismatch);
+      return;
+    }
+
+    const accountExists: AuthNotice = {
+      title: "You already have an account",
+      description: `An account with ${data.email.trim()} already exists. Log in, or reset your password if you've forgotten it.`,
+      tone: "info",
+      action: { label: "Log in", href: loginPath(role) },
+      secondaryAction: { label: "Reset password", href: "/forgot-password" },
+    };
+
     setIsLoading(true);
 
     try {
@@ -124,9 +188,9 @@ export function SignupForm() {
           emailRedirectTo: `${window.location.origin}${loginPath(role)}`,
           data: {
             full_name: data.fullName,
-            roll_number: data.rollNumber,
+            roll_number: isTeacher ? null : data.rollNumber,
             department: data.department,
-            section: normalizeBatchSection(data.section),
+            section: isTeacher ? null : normalizeBatchSection(data.section),
             role,
           },
         },
@@ -134,11 +198,21 @@ export function SignupForm() {
 
       if (authError) {
         const code = (authError as { code?: string }).code;
-        if (code === "user_already_exists") {
-          toast.error("An account with this email already exists. Please sign in instead.");
+        if (code === "user_already_exists" || code === "email_exists") {
+          rememberEmail(data.email);
+          setNotice(accountExists);
+        } else if (authError.status === 429) {
+          toast.error("Too many attempts. Please wait a few minutes and try again.");
         } else {
           toast.error(authError.message);
         }
+        return;
+      }
+
+      // Supabase hides existing accounts by returning a user with no identities.
+      if (authData.user && authData.user.identities?.length === 0) {
+        rememberEmail(data.email);
+        setNotice(accountExists);
         return;
       }
 
@@ -175,20 +249,34 @@ export function SignupForm() {
         <CardHeader className="space-y-1 pb-4">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
-            <CardTitle className="text-xl">Create student account</CardTitle>
+            <CardTitle className="text-xl">Create account</CardTitle>
           </div>
-          <CardDescription>
-            Faculty member?{" "}
-            <Link
-              href={loginPath("teacher")}
-              className="font-medium text-primary hover:text-primary/80 transition-colors underline-offset-4 hover:underline"
-            >
-              Log in as a teacher
-            </Link>
-          </CardDescription>
+          <CardDescription>Fill in your details to get started</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
+            {/* Role selection: switches between /signup/student and /signup/teacher */}
+            <div className="grid grid-cols-2 gap-3">
+              {ROLE_TABS.map(({ role: tabRole, label, Icon }) => {
+                const active = tabRole === role;
+                return (
+                  <Link
+                    key={tabRole}
+                    href={signupPath(tabRole)}
+                    replace
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "p-4 rounded-lg border-2 text-center transition-all",
+                      active ? "border-primary bg-primary/5" : "border-border/50 hover:border-primary/30"
+                    )}
+                  >
+                    <Icon className={cn("h-5 w-5 mx-auto mb-2", active ? "text-primary" : "text-muted-foreground")} />
+                    <span className={cn("text-sm font-medium", active && "text-primary")}>{label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="fullName">Full Name</Label>
               <Input
@@ -208,13 +296,15 @@ export function SignupForm() {
               <Input
                 id="email"
                 type="email"
-                placeholder="name_26@mru.ac.in"
+                placeholder={isTeacher ? "name@mru.edu.in" : "name_26@mru.ac.in"}
                 className="h-11 bg-background/50 border-border/50"
                 {...register("email")}
                 disabled={isLoading}
               />
               <p className="text-xs text-muted-foreground">
-                Use your university email. Only 2026 batch students can sign up.
+                {isTeacher
+                  ? "Use your official faculty email."
+                  : "Use your university email. Only 2026 batch students can sign up."}
               </p>
               {errors.email && (
                 <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -306,30 +396,34 @@ export function SignupForm() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="rollNumber">Roll Number</Label>
-              <Input
-                id="rollNumber"
-                placeholder="e.g., 21BCS001"
-                className="h-11 bg-background/50 border-border/50"
-                {...register("rollNumber")}
-                disabled={isLoading}
-              />
-            </div>
+            {!isTeacher && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="rollNumber">Roll Number</Label>
+                  <Input
+                    id="rollNumber"
+                    placeholder="e.g., 2K26CSUN01001"
+                    className="h-11 bg-background/50 border-border/50"
+                    {...register("rollNumber")}
+                    disabled={isLoading}
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="section">{BATCH_SECTION_LABEL}</Label>
-              <BatchSectionInput
-                id="section"
-                value={watch("section")}
-                onChange={(value) => setValue("section", value, { shouldValidate: true })}
-                disabled={isLoading}
-                className="h-11 bg-background/50 border-border/50"
-              />
-              {errors.section && (
-                <p className="text-sm text-destructive">{errors.section.message}</p>
-              )}
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="section">{BATCH_SECTION_LABEL}</Label>
+                  <BatchSectionInput
+                    id="section"
+                    value={watch("section") ?? ""}
+                    onChange={(value) => setValue("section", value, { shouldValidate: true })}
+                    disabled={isLoading}
+                    className="h-11 bg-background/50 border-border/50"
+                  />
+                  {errors.section && (
+                    <p className="text-sm text-destructive">{errors.section.message}</p>
+                  )}
+                </div>
+              </>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col gap-4 pt-2">
             <Button
@@ -373,6 +467,7 @@ export function SignupForm() {
           Privacy Policy
         </Link>
       </p>
+      <AuthNoticeDialog notice={notice} onClose={() => setNotice(null)} />
     </AuthShell>
   );
 }

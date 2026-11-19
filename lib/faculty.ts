@@ -3,7 +3,10 @@
  * side of the app. There is no teacher signup: an account is a teacher if and
  * only if its email is listed here, and everyone else is a student.
  *
- * To add or remove a teacher, edit this list and redeploy.
+ * To add or remove a teacher, edit this list and redeploy, and update
+ * public.faculty_emails in the database to match (see
+ * prisma/manual-migrations/20261119_teacher_allowlist_guard.sql): a database
+ * trigger downgrades any teacher whose email isn't in that table.
  */
 export const FACULTY: ReadonlyArray<{ name: string; email: string }> = [
   { name: "Dr. Dipali Bansal", email: "dipalibansal@mru.edu.in" },
