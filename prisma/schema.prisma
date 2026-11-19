@@ -120,6 +120,9 @@ model Profile {
   contestSubmissions    ContestSubmission[]
   discussionThreadsCreated DiscussionThread[] @relation("DiscussionThreadAuthor")
   discussionMessages       DiscussionMessage[] @relation("DiscussionMessageAuthor")
+  modulesCreated           LearningModule[]   @relation("ModuleCreator")
+  lessonProgress           LessonProgress[]
+  moduleBadges             ModuleBadge[]
 
   @@index([department])
   @@index([section])
@@ -572,4 +575,91 @@ model DiscussionMessage {
   @@index([parentId])
   @@index([threadId, createdAt])
   @@map("discussion_messages")
+}
+
+// ============================================================
+// MODULES (video courses with badges)
+// ============================================================
+
+/// A video course built by a teacher from ordered lessons. Completing every
+/// lesson earns the student a badge.
+model LearningModule {
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String
+  description String?         @db.Text
+  category    String?
+  level       DifficultyLevel @default(easy)
+  coverUrl    String?         @map("cover_url")
+  badgeName   String          @map("badge_name")
+  status      CourseStatus    @default(draft)
+  publishedAt DateTime?       @map("published_at") @db.Timestamptz
+  createdById String          @map("created_by") @db.Uuid
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  createdBy Profile        @relation("ModuleCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  lessons   ModuleLesson[]
+  badges    ModuleBadge[]
+
+  @@index([status])
+  @@index([createdById])
+  @@map("learning_modules")
+}
+
+/// One video lesson in a module, hosted on Cloudinary.
+model ModuleLesson {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  moduleId      String   @map("module_id") @db.Uuid
+  title         String
+  description   String?  @db.Text
+  videoUrl      String   @map("video_url")
+  videoPublicId String   @map("video_public_id")
+  thumbnailUrl  String?  @map("thumbnail_url")
+  durationSec   Int      @default(0) @map("duration_sec")
+  position      Int      @default(0)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  module   LearningModule   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress LessonProgress[]
+
+  @@index([moduleId, position])
+  @@map("module_lessons")
+}
+
+/// How much of a lesson a student has watched.
+model LessonProgress {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lessonId        String    @map("lesson_id") @db.Uuid
+  studentId       String    @map("student_id") @db.Uuid
+  watchedSec      Int       @default(0) @map("watched_sec")
+  lastPositionSec Int       @default(0) @map("last_position_sec")
+  isCompleted     Boolean   @default(false) @map("is_completed")
+  completedAt     DateTime? @map("completed_at") @db.Timestamptz
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  lesson  ModuleLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  student Profile      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, studentId])
+  @@index([studentId])
+  @@map("lesson_progress")
+}
+
+/// Badge earned by completing every lesson of a module. The credential ID is
+/// the public reference a future certificate will use.
+model ModuleBadge {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  moduleId     String   @map("module_id") @db.Uuid
+  studentId    String   @map("student_id") @db.Uuid
+  credentialId String   @unique @map("credential_id")
+  earnedAt     DateTime @default(now()) @map("earned_at") @db.Timestamptz
+
+  module  LearningModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  student Profile        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([moduleId, studentId])
+  @@index([studentId])
+  @@map("module_badges")
 }

@@ -23,12 +23,14 @@ import {
   MessageSquare,
   Network,
   Eye,
+  Film,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const studentNav = [
   { href: "/student/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/student/learn", label: "Learn", icon: BookOpen },
+  { href: "/student/modules", label: "Modules", icon: Film },
   { href: "/student/ide", label: "IDE", icon: Code2 },
   { href: "/student/dsa-visualizer", label: "DSA Visualizer", icon: Network },
   { href: "/student/code-visualizer", label: "Code Visualizer", icon: Eye },
@@ -49,6 +51,7 @@ const teacherNav = [
   { href: "/teacher/quizzes", label: "My Quizzes", icon: Zap },
   { href: "/teacher/quizzes/create", label: "Create Quiz", icon: PlusCircle },
   { href: "/teacher/quiz-marks", label: "Quiz Marks", icon: Award },
+  { href: "/teacher/modules", label: "Modules", icon: Film },
   { href: "/teacher/learn-content", label: "Upload Content", icon: BookOpen },
   { href: "/teacher/exam-papers", label: "Exam Papers", icon: ScrollText },
   { href: "/teacher/portfolio", label: "E-Portfolio", icon: FolderGit2 },

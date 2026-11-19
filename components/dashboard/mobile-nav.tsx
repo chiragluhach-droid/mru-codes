@@ -23,12 +23,14 @@ import {
   Network,
   Eye,
   PlusCircle,
+  Film,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const studentNav = [
   { href: "/student/dashboard", label: "Home", icon: LayoutDashboard },
   { href: "/student/learn", label: "Learn", icon: BookOpen },
+  { href: "/student/modules", label: "Modules", icon: Film },
   { href: "/student/ide", label: "IDE", icon: Code2 },
   { href: "/student/dsa-visualizer", label: "DSA", icon: Network },
   { href: "/student/code-visualizer", label: "Code", icon: Eye },
@@ -45,6 +47,7 @@ const teacherNav = [
   { href: "/teacher/dashboard", label: "Home", icon: LayoutDashboard },
   { href: "/teacher/quizzes", label: "Quizzes", icon: Zap },
   { href: "/teacher/quizzes/create", label: "Create", icon: PlusCircle },
+  { href: "/teacher/modules", label: "Modules", icon: Film },
   { href: "/teacher/question-bank", label: "Bank", icon: Database },
   { href: "/teacher/ide", label: "IDE", icon: Code2 },
   { href: "/teacher/cheating-detection", label: "Security", icon: Shield },
