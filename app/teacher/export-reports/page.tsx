@@ -23,18 +23,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import toast from "react-hot-toast";
-import type { Department } from "@/lib/departments";
 import {
-  BATCH_SECTION_LABEL,
-  DEPARTMENT_OPTIONS,
-  departmentRequiresSection,
-  isValidBatchSection,
-} from "@/lib/departments";
-import { BatchSectionInput } from "@/components/batch-section-input";
+  ClassTargetFields,
+  EMPTY_CLASS_TARGET,
+  classFilterParams,
+  type ClassTargetValue,
+} from "@/components/class-fields";
 
 export default function ExportReportsPage() {
-  const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
-  const [selectedSection, setSelectedSection] = useState<string>("all");
+  const [filter, setFilter] = useState<ClassTargetValue>(EMPTY_CLASS_TARGET);
   const [reportType, setReportType] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
@@ -45,17 +42,7 @@ export default function ExportReportsPage() {
     try {
       setIsExporting(true);
       const exportType = typeOverride ?? reportType;
-      const params = new URLSearchParams();
-
-      if (selectedDepartment !== "all") {
-        params.append("department", selectedDepartment);
-      }
-      if (
-        isValidBatchSection(selectedSection) &&
-        departmentRequiresSection(selectedDepartment as Department)
-      ) {
-        params.append("section", selectedSection);
-      }
+      const params = classFilterParams(filter);
       params.append("type", exportType);
       if (dateFrom) {
         params.append("dateFrom", dateFrom);
@@ -82,14 +69,12 @@ export default function ExportReportsPage() {
       a.href = url;
       
       const timestamp = new Date().toISOString().split("T")[0];
-      const deptPart = selectedDepartment !== "all" ? `-${selectedDepartment}` : "";
-      const sectionPart =
-        isValidBatchSection(selectedSection) &&
-        departmentRequiresSection(selectedDepartment as Department)
-          ? `-${selectedSection}`
-          : "";
+      const classPart = [filter.department, filter.batch, filter.section, filter.semester && `Sem${filter.semester}`]
+        .filter(Boolean)
+        .map((part) => `-${part}`)
+        .join("");
       const typePart = exportType !== "all" ? `-${exportType}` : "";
-      const filename = `Performance-Report${deptPart}${sectionPart}${typePart}-${timestamp}.xlsx`;
+      const filename = `Performance-Report${classPart}${typePart}-${timestamp}.xlsx`;
       a.download = filename;
       
       document.body.appendChild(a);
@@ -173,46 +158,11 @@ export default function ExportReportsPage() {
               </Select>
             </div>
 
-            {/* Department Filter */}
+            {/* Class filter: leave a field on "All" to include everyone */}
             <div className="space-y-2">
-              <Label>Department</Label>
-              <Select
-                value={selectedDepartment}
-                onValueChange={(value) => {
-                  setSelectedDepartment(value);
-                  if (!departmentRequiresSection(value as Department)) {
-                    setSelectedSection("all");
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All Departments" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Departments</SelectItem>
-                  {DEPARTMENT_OPTIONS.map((d) => (
-                    <SelectItem key={d.value} value={d.value}>
-                      {d.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Class</Label>
+              <ClassTargetFields value={filter} onChange={setFilter} idPrefix="export" allowAll />
             </div>
-
-            {/* Batch/Section Filter */}
-            {departmentRequiresSection(selectedDepartment as Department) && (
-              <div className="space-y-2">
-                <Label htmlFor="exportSection">{BATCH_SECTION_LABEL}</Label>
-                <BatchSectionInput
-                  id="exportSection"
-                  value={selectedSection === "all" ? "" : selectedSection}
-                  onChange={(value) => setSelectedSection(value || "all")}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Leave empty to include every batch/section.
-                </p>
-              </div>
-            )}
 
             {/* Date Range */}
             <div className="space-y-4">
@@ -241,7 +191,7 @@ export default function ExportReportsPage() {
 
             {/* Export Button */}
             <Button
-              onClick={handleExport}
+              onClick={() => handleExport()}
               disabled={isExporting}
               size="lg"
               className="w-full gap-2"

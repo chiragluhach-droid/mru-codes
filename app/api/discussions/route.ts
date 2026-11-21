@@ -1,32 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProfile } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import {
-  BATCH_SECTION_FORMAT_MESSAGE,
-  departmentRequiresSection,
-  isValidBatchSection,
-  normalizeBatchSection,
-  type Department,
-} from "@/lib/departments";
-
-function buildStudentScope(profile: { department: string | null; section: string | null }) {
-  const department = profile.department?.trim() || null;
-  const section = profile.section?.trim() || null;
-
-  return {
-    OR: [
-      { targetDepartment: null },
-      ...(department
-        ? [
-            {
-              targetDepartment: department,
-              OR: [{ targetSection: null }, ...(section ? [{ targetSection: section }] : [])],
-            },
-          ]
-        : []),
-    ],
-  };
-}
+import { parseSemester } from "@/lib/departments";
+import { classTargetWhere, parseClassTarget, type ClassTarget } from "@/lib/class-targeting";
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,15 +13,19 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
     const department = searchParams.get("department")?.trim() || null;
+    const batch = searchParams.get("batch")?.trim() || null;
     const section = searchParams.get("section")?.trim() || null;
+    const semester = parseSemester(searchParams.get("semester"));
 
     const threads = await prisma.discussionThread.findMany({
       where:
         profile.role === "student"
-          ? buildStudentScope(profile)
+          ? classTargetWhere(profile)
           : {
               ...(department ? { targetDepartment: department } : {}),
+              ...(batch ? { targetBatch: batch } : {}),
               ...(section ? { targetSection: section } : {}),
+              ...(semester ? { targetSemester: semester } : {}),
             },
       include: {
         createdBy: {
@@ -88,10 +68,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const title = typeof body.title === "string" ? body.title.trim() : "";
     const content = typeof body.content === "string" ? body.content.trim() : "";
-    const requestedDepartment =
-      typeof body.targetDepartment === "string" ? body.targetDepartment.trim() : "";
-    const requestedSection =
-      typeof body.targetSection === "string" ? normalizeBatchSection(body.targetSection) : "";
 
     if (!title || !content) {
       return NextResponse.json(
@@ -100,36 +76,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const targetDepartment =
-      profile.role === "student"
-        ? profile.department?.trim() || null
-        : requestedDepartment || null;
-    const targetSection =
-      profile.role === "student"
-        ? profile.section?.trim() || null
-        : requestedSection || null;
-
-    if (profile.role === "student" && !targetDepartment) {
-      return NextResponse.json(
-        { error: "Your profile does not have a department configured" },
-        { status: 400 }
-      );
-    }
-
-    if (
-      targetDepartment &&
-      departmentRequiresSection(targetDepartment as Department) &&
-      !targetSection
-    ) {
-      return NextResponse.json(
-        { error: "Batch/section is required for the selected department" },
-        { status: 400 }
-      );
-    }
-
-    // Students post to their own class; teachers must type a valid batch/section.
-    if (profile.role !== "student" && targetSection && !isValidBatchSection(targetSection)) {
-      return NextResponse.json({ error: BATCH_SECTION_FORMAT_MESSAGE }, { status: 400 });
+    // Students post to their own class; teachers choose the target class.
+    let target: ClassTarget;
+    if (profile.role === "student") {
+      if (!profile.department?.trim()) {
+        return NextResponse.json(
+          { error: "Your profile does not have a department configured" },
+          { status: 400 }
+        );
+      }
+      target = {
+        targetDepartment: profile.department.trim(),
+        targetBatch: profile.batch?.trim() || null,
+        targetSection: profile.section?.trim() || null,
+        targetSemester: profile.semester ?? null,
+      };
+    } else {
+      const parsedTarget = parseClassTarget(body);
+      if ("error" in parsedTarget) {
+        return NextResponse.json({ error: parsedTarget.error }, { status: 400 });
+      }
+      target = parsedTarget.target;
     }
 
     const thread = await prisma.discussionThread.create({
@@ -137,11 +104,7 @@ export async function POST(request: NextRequest) {
         title,
         content,
         createdById: profile.id,
-        targetDepartment,
-        targetSection:
-          targetDepartment && departmentRequiresSection(targetDepartment as Department)
-            ? targetSection
-            : null,
+        ...target,
       },
       include: {
         createdBy: {

@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  formatDepartmentSection,
+  formatTarget,
 } from "@/lib/departments";
 
 async function getAssignments(teacherId: string) {
@@ -176,10 +176,7 @@ export default async function TeacherAssignmentsPage() {
                     <Users className="h-4 w-4" />
                     <span>
                       Class:{" "}
-                      {formatDepartmentSection(
-                        assignment.targetDepartment,
-                        assignment.targetSection
-                      )}
+                      {formatTarget(assignment)}
                     </span>
                   </div>
                 </div>

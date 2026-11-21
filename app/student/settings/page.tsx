@@ -31,13 +31,17 @@ import { Separator } from "@/components/ui/separator";
 import { useUser } from "@/providers/user-provider";
 import toast from "react-hot-toast";
 import {
-  BATCH_SECTION_FORMAT_MESSAGE,
-  BATCH_SECTION_LABEL,
   DEPARTMENT_OPTIONS,
-  isValidBatchSection,
-  normalizeBatchSection,
+  isValidBatch,
+  isValidSection,
+  parseSemester,
 } from "@/lib/departments";
-import { BatchSectionInput } from "@/components/batch-section-input";
+import {
+  BATCH_SELECT_OPTIONS,
+  ClassSelect,
+  SECTION_SELECT_OPTIONS,
+  SEMESTER_SELECT_OPTIONS,
+} from "@/components/class-fields";
 import {
   Select,
   SelectContent,
@@ -50,7 +54,10 @@ const profileSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   rollNumber: z.string().optional().or(z.literal("")),
   department: z.string().refine((v) => DEPARTMENT_OPTIONS.some((opt) => opt.value === v), "Please select your department"),
-  section: z.string().refine(isValidBatchSection, BATCH_SECTION_FORMAT_MESSAGE),
+  batch: z.string().refine((v) => isValidBatch(v), "Please select your batch"),
+  semester: z.string().refine((v) => parseSemester(v) !== null, "Please select your semester"),
+  // Boolean() keeps zod from narrowing the field to the Section union.
+  section: z.string().refine((v) => Boolean(isValidSection(v)), "Please select your section"),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -74,6 +81,8 @@ export default function StudentSettingsPage() {
       fullName: profile?.fullName || "",
       rollNumber: profile?.rollNumber || "",
       department: profile?.department || "",
+      batch: profile?.batch || "",
+      semester: profile?.semester ? String(profile.semester) : "",
       section: profile?.section || "",
     },
   });
@@ -86,6 +95,8 @@ export default function StudentSettingsPage() {
         fullName: profile.fullName || "",
         rollNumber: profile.rollNumber || "",
         department: profile.department || "",
+        batch: profile.batch || "",
+        semester: profile.semester ? String(profile.semester) : "",
         section: profile.section || "",
       });
       setIsInitialLoading(false);
@@ -113,7 +124,9 @@ export default function StudentSettingsPage() {
           fullName: data.fullName,
           rollNumber: data.rollNumber || null,
           department: data.department || null,
-          section: normalizeBatchSection(data.section),
+          batch: data.batch,
+          semester: parseSemester(data.semester),
+          section: data.section,
         }),
       });
 
@@ -296,27 +309,41 @@ export default function StudentSettingsPage() {
 
                 <Separator />
 
-                {/* Batch/Section */}
-                <div className="space-y-2">
-                  <Label htmlFor="section" className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    {BATCH_SECTION_LABEL}
-                  </Label>
-                  <BatchSectionInput
-                    id="section"
-                    value={watch("section") ?? ""}
-                    onChange={(value) =>
-                      setValue("section", value, { shouldValidate: true, shouldDirty: true })
-                    }
+                {/* Batch, semester and section */}
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <ClassSelect
+                    id="batch"
+                    label="Batch"
+                    value={watch("batch") ?? ""}
+                    onChange={(value) => setValue("batch", value, { shouldValidate: true, shouldDirty: true })}
+                    options={BATCH_SELECT_OPTIONS}
+                    placeholder="Select batch"
                     disabled={isLoading}
-                    className="h-11"
+                    error={errors.batch?.message}
+                    triggerClassName="h-11"
                   />
-                  {errors.section && (
-                    <p className="text-sm text-destructive flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {errors.section.message}
-                    </p>
-                  )}
+                  <ClassSelect
+                    id="semester"
+                    label="Semester"
+                    value={watch("semester") ?? ""}
+                    onChange={(value) => setValue("semester", value, { shouldValidate: true, shouldDirty: true })}
+                    options={SEMESTER_SELECT_OPTIONS}
+                    placeholder="Select semester"
+                    disabled={isLoading}
+                    error={errors.semester?.message}
+                    triggerClassName="h-11"
+                  />
+                  <ClassSelect
+                    id="section"
+                    label="Section"
+                    value={watch("section") ?? ""}
+                    onChange={(value) => setValue("section", value, { shouldValidate: true, shouldDirty: true })}
+                    options={SECTION_SELECT_OPTIONS}
+                    placeholder="Select section"
+                    disabled={isLoading}
+                    error={errors.section?.message}
+                    triggerClassName="h-11"
+                  />
                 </div>
               </CardContent>
             </Card>

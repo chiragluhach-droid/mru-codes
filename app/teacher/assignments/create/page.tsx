@@ -35,14 +35,12 @@ import { FileUpload } from "@/components/ui/file-upload";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import {
-  BATCH_SECTION_FORMAT_MESSAGE,
-  BATCH_SECTION_LABEL,
-  DEPARTMENT_OPTIONS,
-  departmentRequiresSection,
-  isValidBatchSection,
-  type Department,
-} from "@/lib/departments";
-import { BatchSectionInput } from "@/components/batch-section-input";
+  ClassTargetFields,
+  EMPTY_CLASS_TARGET,
+  classTargetBody,
+  classTargetError,
+  type ClassTargetValue,
+} from "@/components/class-fields";
 
 const assignmentSchema = z
   .object({
@@ -53,17 +51,6 @@ const assignmentSchema = z
     maxPoints: z.number().min(1).max(1000).default(100),
     dueDate: z.string().optional(),
     status: z.enum(["draft", "published", "closed"]).default("draft"),
-    targetDepartment: z.string().min(1, "Target department is required"),
-    targetSection: z.string().optional(),
-  })
-  .refine((data) => {
-    if (departmentRequiresSection(data.targetDepartment as Department)) {
-      return isValidBatchSection(data.targetSection);
-    }
-    return true;
-  }, {
-    message: BATCH_SECTION_FORMAT_MESSAGE,
-    path: ["targetSection"],
   });
 
 type AssignmentFormData = z.infer<typeof assignmentSchema>;
@@ -75,6 +62,8 @@ export default function CreateAssignmentPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfFileName, setPdfFileName] = useState<string | null>(null);
+  const [target, setTarget] = useState<ClassTargetValue>(EMPTY_CLASS_TARGET);
+  const [targetError, setTargetError] = useState<string | null>(null);
 
   const {
     register,
@@ -88,14 +77,11 @@ export default function CreateAssignmentPage() {
       difficulty: "medium",
       maxPoints: 100,
       status: "draft",
-      targetDepartment: "",
-      targetSection: "",
     },
   });
 
   const difficulty = watch("difficulty");
   const status = watch("status");
-  const targetDepartment = watch("targetDepartment");
 
   const handleFileSelect = async (file: File) => {
     setUploadError(null);
@@ -142,6 +128,13 @@ export default function CreateAssignmentPage() {
       return;
     }
 
+    const missingTarget = classTargetError(target);
+    setTargetError(missingTarget);
+    if (missingTarget) {
+      toast.error(missingTarget);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -152,6 +145,7 @@ export default function CreateAssignmentPage() {
         },
         body: JSON.stringify({
           ...data,
+          ...classTargetBody(target),
           pdfUrl,
           pdfFileName,
           maxPoints: Number(data.maxPoints),
@@ -304,59 +298,23 @@ export default function CreateAssignmentPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="targetDepartment">
-                    Target Department <span className="text-destructive">*</span>
-                  </Label>
-                  <Select
-                    value={targetDepartment}
-                    onValueChange={(value) => {
-                      setValue("targetDepartment", value, { shouldValidate: true });
-                      if (!departmentRequiresSection(value as Department)) {
-                        setValue("targetSection", "", { shouldValidate: true });
-                      }
-                    }}
-                    disabled={isLoading}
-                  >
-                    <SelectTrigger id="targetDepartment">
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DEPARTMENT_OPTIONS.map((department) => (
-                        <SelectItem key={department.value} value={department.value}>
-                          {department.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.targetDepartment && (
-                    <p className="text-sm text-destructive">
-                      {errors.targetDepartment.message}
-                    </p>
-                  )}
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm font-medium">Assign to</p>
+                  <p className="text-xs text-muted-foreground">
+                    Only students in this department and batch will see it. Leave section or
+                    semester as &quot;All&quot; to include everyone in the batch.
+                  </p>
                 </div>
-
-                {departmentRequiresSection(targetDepartment as Department) && (
-                  <div className="space-y-2">
-                    <Label htmlFor="targetSection">
-                      Target {BATCH_SECTION_LABEL} <span className="text-destructive">*</span>
-                    </Label>
-                    <BatchSectionInput
-                      id="targetSection"
-                      value={watch("targetSection") ?? ""}
-                      onChange={(value) =>
-                        setValue("targetSection", value, { shouldValidate: true })
-                      }
-                      disabled={isLoading}
-                    />
-                    {errors.targetSection && (
-                      <p className="text-sm text-destructive">
-                        {errors.targetSection.message}
-                      </p>
-                    )}
-                  </div>
-                )}
+                <ClassTargetFields
+                  value={target}
+                  onChange={(value) => {
+                    setTarget(value);
+                    setTargetError(null);
+                  }}
+                  disabled={isLoading}
+                />
+                {targetError && <p className="text-sm text-destructive">{targetError}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-4">

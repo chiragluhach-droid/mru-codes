@@ -104,6 +104,7 @@ interface AnalyticsData {
   students: Student[];
   quizzes: QuizWithPerformances[];
   departments: string[];
+  batches?: string[];
   sections: string[];
   sectionStats: Array<{
     section: string;
@@ -181,6 +182,7 @@ export function TeacherPerformanceDashboard() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
+  const [selectedBatch, setSelectedBatch] = useState<string>("all");
   const [selectedSection, setSelectedSection] = useState<string>("all");
   const [selectedStudent, setSelectedStudent] = useState<string>("all");
   const [selectedQuiz, setSelectedQuiz] = useState<string>("all");
@@ -194,6 +196,9 @@ export function TeacherPerformanceDashboard() {
       const params = new URLSearchParams();
       if (selectedDepartment !== "all") {
         params.append("department", selectedDepartment);
+      }
+      if (selectedBatch !== "all") {
+        params.append("batch", selectedBatch);
       }
       if (selectedSection !== "all") {
         params.append("section", selectedSection);
@@ -235,7 +240,7 @@ export function TeacherPerformanceDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [selectedDepartment, selectedSection, selectedStudent]);
+  }, [selectedDepartment, selectedBatch, selectedSection, selectedStudent]);
 
   useEffect(() => {
     fetchAnalytics();
@@ -243,9 +248,15 @@ export function TeacherPerformanceDashboard() {
 
   // Reset dependent filters when higher-level filter changes
   useEffect(() => {
+    setSelectedBatch("all");
     setSelectedSection("all");
     setSelectedStudent("all");
   }, [selectedDepartment]);
+
+  useEffect(() => {
+    setSelectedSection("all");
+    setSelectedStudent("all");
+  }, [selectedBatch]);
 
   useEffect(() => {
     setSelectedStudent("all");
@@ -265,6 +276,9 @@ export function TeacherPerformanceDashboard() {
       const params = new URLSearchParams();
       if (selectedDepartment !== "all") {
         params.append("department", selectedDepartment);
+      }
+      if (selectedBatch !== "all") {
+        params.append("batch", selectedBatch);
       }
       if (selectedSection !== "all") {
         params.append("section", selectedSection);
@@ -289,7 +303,9 @@ export function TeacherPerformanceDashboard() {
       a.href = url;
 
       const timestamp = new Date().toISOString().split("T")[0];
-      const departmentPart = selectedDepartment !== "all" ? `-${selectedDepartment}` : "";
+      const departmentPart =
+        (selectedDepartment !== "all" ? `-${selectedDepartment}` : "") +
+        (selectedBatch !== "all" ? `-${selectedBatch}` : "");
       const sectionPart = selectedSection !== "all" ? `-${selectedSection}` : "";
       const filename = `Performance-Report${departmentPart}${sectionPart}-${type}-${timestamp}.xlsx`;
       a.download = filename;
@@ -529,15 +545,29 @@ export function TeacherPerformanceDashboard() {
             </SelectContent>
           </Select>
 
-          <Select value={selectedSection} onValueChange={setSelectedSection}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="All Batch/Sections" />
+          <Select value={selectedBatch} onValueChange={setSelectedBatch}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="All Batches" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Batch/Sections</SelectItem>
+              <SelectItem value="all">All Batches</SelectItem>
+              {(data.batches || []).map((batch) => (
+                <SelectItem key={batch} value={batch}>
+                  {batch}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedSection} onValueChange={setSelectedSection}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="All Sections" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Sections</SelectItem>
               {data.sections.map((section) => (
                 <SelectItem key={section} value={section}>
-                  {section}
+                  Section {section}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -896,7 +926,7 @@ export function TeacherPerformanceDashboard() {
                             <TableRow>
                               <TableHead>Student</TableHead>
                               <TableHead>Roll No.</TableHead>
-                              <TableHead>Batch/Section</TableHead>
+                              <TableHead>Section</TableHead>
                               <TableHead>Department</TableHead>
                               <TableHead className="text-right">Score</TableHead>
                               <TableHead className="text-right">Accuracy</TableHead>
@@ -936,7 +966,7 @@ export function TeacherPerformanceDashboard() {
                           <TableRow>
                             <TableHead>Student</TableHead>
                             <TableHead>Roll No.</TableHead>
-                            <TableHead>Batch/Section</TableHead>
+                            <TableHead>Section</TableHead>
                             <TableHead>Department</TableHead>
                             <TableHead className="text-right">Score</TableHead>
                             <TableHead className="text-right">Accuracy</TableHead>

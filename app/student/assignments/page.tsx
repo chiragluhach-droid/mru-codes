@@ -19,35 +19,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { classTargetWhere, type StudentClass } from "@/lib/class-targeting";
 
-async function getAssignments(
-  studentId: string,
-  department: string | null,
-  section: string | null
-) {
+async function getAssignments(studentId: string, student: StudentClass) {
   try {
-    const studentDepartment = department?.trim() || null;
-    const studentSection = section?.trim() || null;
-
     const assignments = await prisma.assignment.findMany({
       where: {
         status: "published",
-        OR: [
-          {
-            targetDepartment: null,
-          },
-          ...(studentDepartment
-            ? [
-                {
-                  targetDepartment: studentDepartment,
-                  OR: [
-                    { targetSection: null },
-                    ...(studentSection ? [{ targetSection: studentSection }] : []),
-                  ],
-                },
-              ]
-            : []),
-        ],
+        ...classTargetWhere(student),
       },
       include: {
         createdBy: {
@@ -147,11 +126,7 @@ export default async function StudentAssignmentsPage() {
     redirect("/teacher/dashboard");
   }
 
-  const assignments = await getAssignments(
-    profile.id,
-    profile.department ?? null,
-    profile.section ?? null
-  );
+  const assignments = await getAssignments(profile.id, profile);
 
   return (
     <div className="space-y-6">

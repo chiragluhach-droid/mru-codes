@@ -28,13 +28,16 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 import {
-  BATCH_SECTION_FORMAT_MESSAGE,
-  BATCH_SECTION_LABEL,
+  SIGNUP_BATCH_OPTIONS,
   departmentOptionsForRole,
-  isValidBatchSection,
-  normalizeBatchSection,
+  isValidSection,
+  parseSemester,
 } from "@/lib/departments";
-import { BatchSectionInput } from "@/components/batch-section-input";
+import {
+  ClassSelect,
+  SECTION_SELECT_OPTIONS,
+  SEMESTER_SELECT_OPTIONS,
+} from "@/components/class-fields";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { dashboardPath, loginPath, signupPath, type AuthRole } from "@/lib/auth-roles";
 import { isTeacherEmail } from "@/lib/faculty";
@@ -84,6 +87,8 @@ const signupSchema = z
     rollNumber: z.string().optional(),
     department: z.string().min(1, "Department is required"),
     section: z.string().optional(),
+    batch: z.string().optional(),
+    semester: z.string().optional(),
     role: z.enum(["student", "teacher"]),
   })
   .superRefine((data, ctx) => {
@@ -91,8 +96,15 @@ const signupSchema = z
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["confirmPassword"], message: "Passwords don't match" });
     }
     // Which emails may sign up for which role is checked on submit (signupNotice).
-    if (data.role === "student" && !isValidBatchSection(data.section)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["section"], message: BATCH_SECTION_FORMAT_MESSAGE });
+    if (data.role !== "student") return;
+    if (!(SIGNUP_BATCH_OPTIONS as readonly string[]).includes(data.batch ?? "")) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["batch"], message: "Select your batch" });
+    }
+    if (parseSemester(data.semester) === null) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["semester"], message: "Select your semester" });
+    }
+    if (!isValidSection(data.section)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["section"], message: "Select your section" });
     }
   });
 
@@ -150,6 +162,8 @@ export function SignupForm({ role }: { role: AuthRole }) {
       role,
       department: "",
       section: "",
+      batch: SIGNUP_BATCH_OPTIONS[0],
+      semester: "",
     },
   });
 
@@ -190,7 +204,9 @@ export function SignupForm({ role }: { role: AuthRole }) {
             full_name: data.fullName,
             roll_number: isTeacher ? null : data.rollNumber,
             department: data.department,
-            section: isTeacher ? null : normalizeBatchSection(data.section),
+            section: isTeacher ? null : data.section,
+            batch: isTeacher ? null : data.batch,
+            semester: isTeacher ? null : parseSemester(data.semester),
             role,
           },
         },
@@ -409,18 +425,41 @@ export function SignupForm({ role }: { role: AuthRole }) {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="section">{BATCH_SECTION_LABEL}</Label>
-                  <BatchSectionInput
+                <ClassSelect
+                  id="batch"
+                  label="Batch"
+                  value={watch("batch") ?? ""}
+                  onChange={(value) => setValue("batch", value, { shouldValidate: true })}
+                  options={SIGNUP_BATCH_OPTIONS.map((b) => ({ value: b, label: b }))}
+                  placeholder="Select batch"
+                  disabled={isLoading}
+                  error={errors.batch?.message}
+                  triggerClassName="h-11 bg-background/50 border-border/50"
+                />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <ClassSelect
+                    id="semester"
+                    label="Semester"
+                    value={watch("semester") ?? ""}
+                    onChange={(value) => setValue("semester", value, { shouldValidate: true })}
+                    options={SEMESTER_SELECT_OPTIONS}
+                    placeholder="Select"
+                    disabled={isLoading}
+                    error={errors.semester?.message}
+                    triggerClassName="h-11 bg-background/50 border-border/50"
+                  />
+                  <ClassSelect
                     id="section"
+                    label="Section"
                     value={watch("section") ?? ""}
                     onChange={(value) => setValue("section", value, { shouldValidate: true })}
+                    options={SECTION_SELECT_OPTIONS}
+                    placeholder="Select"
                     disabled={isLoading}
-                    className="h-11 bg-background/50 border-border/50"
+                    error={errors.section?.message}
+                    triggerClassName="h-11 bg-background/50 border-border/50"
                   />
-                  {errors.section && (
-                    <p className="text-sm text-destructive">{errors.section.message}</p>
-                  )}
                 </div>
               </>
             )}

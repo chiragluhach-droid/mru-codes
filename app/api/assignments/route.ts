@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getProfile } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { AssignmentStatus } from "@prisma/client";
-import {
-  BATCH_SECTION_FORMAT_MESSAGE,
-  departmentRequiresSection,
-  isValidBatchSection,
-  normalizeBatchSection,
-  type Department,
-} from "@/lib/departments";
+import { classTargetWhere, parseClassTarget } from "@/lib/class-targeting";
 
 // GET /api/assignments - Get all assignments (for teachers) or published assignments (for students)
 export async function GET(request: NextRequest) {
@@ -23,29 +17,11 @@ export async function GET(request: NextRequest) {
     const forStudent = searchParams.get("forStudent") === "true";
 
     if (forStudent || profile.role === "student") {
-      const studentDepartment = profile.department?.trim() || null;
-      const studentSection = profile.section?.trim() || null;
-
-      // Students can only see published assignments
+      // Students only see published assignments targeted at their class.
       const assignments = await prisma.assignment.findMany({
         where: {
           status: (status as AssignmentStatus) || "published",
-          OR: [
-            {
-              targetDepartment: null,
-            },
-            ...(studentDepartment
-              ? [
-                  {
-                    targetDepartment: studentDepartment,
-                    OR: [
-                      { targetSection: null },
-                      ...(studentSection ? [{ targetSection: studentSection }] : []),
-                    ],
-                  },
-                ]
-              : []),
-          ],
+          ...classTargetWhere(profile),
         },
         include: {
           createdBy: {
@@ -127,39 +103,15 @@ export async function POST(request: NextRequest) {
       pdfUrl,
       pdfFileName,
       status,
-      targetDepartment,
-      targetSection,
     } = body;
 
-    if (!title || !pdfUrl || !targetDepartment) {
-      return NextResponse.json(
-        { error: "Title, PDF, and target class are required" },
-        { status: 400 }
-      );
+    if (!title || !pdfUrl) {
+      return NextResponse.json({ error: "Title and PDF are required" }, { status: 400 });
     }
 
-    const normalizedDepartment =
-      typeof targetDepartment === "string" ? targetDepartment.trim() : "";
-    const normalizedSection =
-      typeof targetSection === "string" && targetSection.trim().length > 0
-        ? normalizeBatchSection(targetSection)
-        : null;
-
-    if (!normalizedDepartment) {
-      return NextResponse.json(
-        { error: "Target department is required" },
-        { status: 400 }
-      );
-    }
-
-    if (
-      departmentRequiresSection(normalizedDepartment as Department) &&
-      !isValidBatchSection(normalizedSection)
-    ) {
-      return NextResponse.json(
-        { error: `Target batch/section is required. ${BATCH_SECTION_FORMAT_MESSAGE}` },
-        { status: 400 }
-      );
+    const parsedTarget = parseClassTarget(body);
+    if ("error" in parsedTarget) {
+      return NextResponse.json({ error: parsedTarget.error }, { status: 400 });
     }
 
     const assignment = await prisma.assignment.create({
@@ -170,10 +122,7 @@ export async function POST(request: NextRequest) {
         difficulty: difficulty || "medium",
         maxPoints: maxPoints || 100,
         dueDate: dueDate ? new Date(dueDate) : null,
-        targetDepartment: normalizedDepartment,
-        targetSection: departmentRequiresSection(normalizedDepartment as Department)
-          ? normalizedSection
-          : null,
+        ...parsedTarget.target,
         pdfUrl,
         pdfFileName,
         createdById: profile.id,

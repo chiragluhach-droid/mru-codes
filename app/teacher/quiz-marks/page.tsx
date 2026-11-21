@@ -205,7 +205,7 @@ export default function QuizMarksPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Quiz Marks Dashboard</h1>
         <p className="text-muted-foreground mt-1">
-          View all students&apos; quiz results organized by section
+          View all students&apos; quiz results organized by class
         </p>
       </div>
 
@@ -340,10 +340,10 @@ export default function QuizMarksPage() {
                 </div>
                 <Select value={selectedSection} onValueChange={setSelectedSection}>
                   <SelectTrigger className="w-full sm:w-[200px]">
-                    <SelectValue placeholder="All Batch/Sections" />
+                    <SelectValue placeholder="All Sections" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Batch/Sections</SelectItem>
+                    <SelectItem value="all">All Sections</SelectItem>
                     {results.sections.map((section) => (
                       <SelectItem key={section.section} value={section.section}>
                         {section.department
@@ -389,7 +389,7 @@ export default function QuizMarksPage() {
                       <div>
                         <CardTitle className="flex items-center gap-2">
                           <Users className="h-5 w-5 text-primary" />
-                          Batch/Section: {section.section}
+                          {section.section}
                           {section.department && (
                             <Badge variant="outline" className="ml-2">
                               {section.department}
@@ -398,7 +398,7 @@ export default function QuizMarksPage() {
                         </CardTitle>
                         <CardDescription className="mt-1">
                           {sectionStudents.length} student
-                          {sectionStudents.length !== 1 ? "s" : ""} in this section
+                          {sectionStudents.length !== 1 ? "s" : ""} in this class
                         </CardDescription>
                       </div>
                     </div>

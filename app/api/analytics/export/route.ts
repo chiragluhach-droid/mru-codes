@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProfile } from "@/lib/supabase/server";
 import prisma from "@/lib/prisma";
+import { describeStudentClassFilter, studentClassFilter } from "@/lib/class-targeting";
 import * as XLSX from "xlsx";
 import { Prisma } from "@prisma/client";
 import ExcelJS from "exceljs";
@@ -48,8 +49,7 @@ export async function GET(request: NextRequest) {
     // Get all students
     const studentsQuery: Prisma.ProfileWhereInput = {
       role: "student",
-      ...(department && department !== "all" ? { department } : {}),
-      ...(section && section !== "all" ? { section } : {}),
+      ...studentClassFilter(searchParams),
       ...(studentId && studentId !== "all" ? { id: studentId } : {}),
     };
 
@@ -61,7 +61,9 @@ export async function GET(request: NextRequest) {
         email: true,
         rollNumber: true,
         department: true,
+        batch: true,
         section: true,
+        semester: true,
         totalScore: true,
         quizzesTaken: true,
         createdAt: true,
@@ -252,13 +254,7 @@ export async function GET(request: NextRequest) {
         });
         sheet.addRow({
           metric: "Filter Applied",
-          value:
-            [
-              department && department !== "all" ? `Department: ${department}` : null,
-              section && section !== "all" ? `Section: ${section}` : null,
-            ]
-              .filter(Boolean)
-              .join(" • ") || "All Students",
+          value: describeStudentClassFilter(searchParams),
         });
         sheet.addRow({
           metric: "Date Range",
@@ -280,7 +276,9 @@ export async function GET(request: NextRequest) {
           { header: "Email", key: "email", width: 30 },
           { header: "Roll Number", key: "roll", width: 14 },
           { header: "Department", key: "dept", width: 16 },
-          { header: "Batch/Section", key: "sec", width: 10 },
+          { header: "Batch", key: "batch", width: 8 },
+          { header: "Section", key: "sec", width: 8 },
+          { header: "Semester", key: "sem", width: 9 },
           { header: "Total Score", key: "totalScore", width: 12 },
           { header: "Quizzes Taken", key: "quizzesTaken", width: 12 },
           { header: "Total Sessions", key: "sessions", width: 12 },
@@ -295,7 +293,9 @@ export async function GET(request: NextRequest) {
           { header: "Student Name", key: "name", width: 24 },
           { header: "Email", key: "email", width: 30 },
           { header: "Department", key: "dept", width: 16 },
-          { header: "Batch/Section", key: "sec", width: 10 },
+          { header: "Batch", key: "batch", width: 8 },
+          { header: "Section", key: "sec", width: 8 },
+          { header: "Semester", key: "sem", width: 9 },
           { header: "Total Sessions", key: "sessions", width: 14 },
           { header: "Avg Score", key: "avgScore", width: 12 },
           { header: "Avg Accuracy %", key: "avgAcc", width: 14 },
@@ -357,6 +357,8 @@ export async function GET(request: NextRequest) {
             email: student.email,
             roll: student.rollNumber || "-",
             dept: student.department || "-",
+            batch: student.batch || "-",
+            sem: student.semester ?? "-",
             sec: student.section || "-",
             totalScore: student.totalScore,
             quizzesTaken: student.quizzesTaken,
@@ -371,6 +373,8 @@ export async function GET(request: NextRequest) {
             name: student.fullName,
             email: student.email,
             dept: student.department || "-",
+            batch: student.batch || "-",
+            sem: student.semester ?? "-",
             sec: student.section || "-",
             sessions: ps.length,
             avgScore: Math.round(avgScore * 100) / 100,
@@ -393,7 +397,9 @@ export async function GET(request: NextRequest) {
           { header: "Email", key: "email", width: 30 },
           { header: "Roll Number", key: "roll", width: 14 },
           { header: "Department", key: "dept", width: 16 },
-          { header: "Batch/Section", key: "sec", width: 10 },
+          { header: "Batch", key: "batch", width: 8 },
+          { header: "Section", key: "sec", width: 8 },
+          { header: "Semester", key: "sem", width: 9 },
           { header: "Total Score", key: "totalScore", width: 12 },
           { header: "Total Quiz Taken", key: "totalQuizTaken", width: 16 },
           { header: "Distinct Quizzes", key: "distinctQuizzes", width: 16 },
@@ -493,6 +499,8 @@ export async function GET(request: NextRequest) {
             email: student.email,
             roll: student.rollNumber || "-",
             dept: student.department || "-",
+            batch: student.batch || "-",
+            sem: student.semester ?? "-",
             sec: student.section || "-",
             totalScore: student.totalScore,
             totalQuizTaken,
@@ -529,7 +537,9 @@ export async function GET(request: NextRequest) {
           { header: "Email", key: "email", width: 30 },
           { header: "Roll Number", key: "roll", width: 14 },
           { header: "Department", key: "dept", width: 16 },
-          { header: "Batch/Section", key: "sec", width: 10 },
+          { header: "Batch", key: "batch", width: 8 },
+          { header: "Section", key: "sec", width: 8 },
+          { header: "Semester", key: "sem", width: 9 },
           { header: "Session ID", key: "sessionId", width: 38 },
           { header: "Quiz Title", key: "quiz", width: 28 },
           { header: "Topic", key: "topic", width: 16 },
@@ -563,6 +573,8 @@ export async function GET(request: NextRequest) {
             email: student.email,
             roll: student.rollNumber || "-",
             dept: student.department || "-",
+            batch: student.batch || "-",
+            sem: student.semester ?? "-",
             sec: student.section || "-",
             sessionId: p.session.id,
             quiz: p.session.quiz.title,
@@ -594,7 +606,9 @@ export async function GET(request: NextRequest) {
           { header: "Email", key: "email", width: 30 },
           { header: "Roll Number", key: "roll", width: 14 },
           { header: "Department", key: "dept", width: 16 },
-          { header: "Batch/Section", key: "sec", width: 10 },
+          { header: "Batch", key: "batch", width: 8 },
+          { header: "Section", key: "sec", width: 8 },
+          { header: "Semester", key: "sem", width: 9 },
           { header: "Assignment ID", key: "assignmentId", width: 38 },
           { header: "Assignment Title", key: "title", width: 30 },
           { header: "Topic", key: "topic", width: 18 },
@@ -622,6 +636,8 @@ export async function GET(request: NextRequest) {
             email: student.email,
             roll: student.rollNumber || "-",
             dept: student.department || "-",
+            batch: student.batch || "-",
+            sem: student.semester ?? "-",
             sec: student.section || "-",
             assignmentId: a.assignment.id,
             title: a.assignment.title,
@@ -712,7 +728,9 @@ export async function GET(request: NextRequest) {
             { header: "Student Name", key: "student", width: 22 },
             { header: "Email", key: "email", width: 30 },
             { header: "Department", key: "dept", width: 14 },
-            { header: "Batch/Section", key: "sec", width: 10 },
+            { header: "Batch", key: "batch", width: 8 },
+            { header: "Section", key: "sec", width: 8 },
+            { header: "Semester", key: "sem", width: 9 },
             { header: "Session ID", key: "sessionId", width: 38 },
             { header: "Room Code", key: "room", width: 12 },
             { header: "Quiz Title", key: "quiz", width: 28 },
@@ -733,6 +751,8 @@ export async function GET(request: NextRequest) {
               student: student?.fullName ?? "-",
               email: student?.email ?? "-",
               dept: student?.department ?? "-",
+              batch: student?.batch ?? "-",
+              sem: student?.semester ?? "-",
               sec: student?.section ?? "-",
               sessionId: s.sessionId,
               room: s.session.roomCode,
@@ -829,7 +849,9 @@ export async function GET(request: NextRequest) {
           const sheet = workbook.addWorksheet("Section Summary");
           sheet.columns = [
             { header: "Department", key: "dept", width: 14 },
-            { header: "Batch/Section", key: "sec", width: 10 },
+            { header: "Batch", key: "batch", width: 8 },
+            { header: "Section", key: "sec", width: 8 },
+            { header: "Semester", key: "sem", width: 9 },
             { header: "Total Students", key: "students", width: 14 },
             { header: "Active Students", key: "active", width: 14 },
             { header: "Average Score", key: "avgScore", width: 14 },
@@ -842,11 +864,12 @@ export async function GET(request: NextRequest) {
           ];
 
           type GroupKey = string;
-          const groupKey = (dept: string | null, sec: string | null) => `${dept ?? "-"}__${sec ?? "-"}`;
+          const groupKey = (st: { department: string | null; batch: string | null; section: string | null } | undefined) =>
+            `${st?.department ?? "-"}__${st?.batch ?? "-"}__${st?.section ?? "-"}`;
 
           const studentsByGroup = new Map<GroupKey, typeof students>();
           for (const s of students) {
-            const k = groupKey(s.department ?? null, s.section ?? null);
+            const k = groupKey(s);
             const arr = studentsByGroup.get(k) ?? [];
             arr.push(s);
             studentsByGroup.set(k, arr);
@@ -855,7 +878,7 @@ export async function GET(request: NextRequest) {
           const participationsByGroup = new Map<GroupKey, typeof participations>();
           for (const p of participations) {
             const st = studentById.get(p.studentId);
-            const k = groupKey(st?.department ?? null, st?.section ?? null);
+            const k = groupKey(st);
             const arr = participationsByGroup.get(k) ?? [];
             arr.push(p);
             participationsByGroup.set(k, arr);
@@ -864,7 +887,7 @@ export async function GET(request: NextRequest) {
           const assignmentsByGroup = new Map<GroupKey, typeof assignmentSubmissions>();
           for (const a of assignmentSubmissions) {
             const st = studentById.get(a.studentId);
-            const k = groupKey(st?.department ?? null, st?.section ?? null);
+            const k = groupKey(st);
             const arr = assignmentsByGroup.get(k) ?? [];
             arr.push(a);
             assignmentsByGroup.set(k, arr);
@@ -874,7 +897,7 @@ export async function GET(request: NextRequest) {
           thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
           for (const [k, groupStudents] of [...studentsByGroup.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
-            const [dept, sec] = k.split("__");
+            const [dept, batch, sec] = k.split("__");
             const ps = participationsByGroup.get(k) ?? [];
             const as = assignmentsByGroup.get(k) ?? [];
 
@@ -901,7 +924,9 @@ export async function GET(request: NextRequest) {
 
             sheet.addRow({
               dept,
+              batch,
               sec,
+              sem: "-",
               students: groupStudents.length,
               active: activeStudents,
               avgScore: Math.round(avgScore * 100) / 100,
@@ -968,7 +993,11 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      const filename = makeFilename({ department, section, type: reportType });
+      const filename = makeFilename({
+        department: [department, searchParams.get("batch")].filter((v) => v && v !== "all").join("-") || null,
+        section,
+        type: reportType,
+      });
       const arrayBuffer = (await workbook.xlsx.writeBuffer()) as ArrayBuffer;
       const excelBuffer = Buffer.from(arrayBuffer);
 

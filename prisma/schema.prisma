@@ -96,6 +96,10 @@ model Profile {
   /// Department / program (CSE, AIML, CSTI, FSD, GenAI)
   department   String?  @map("department")
   section      String?
+  /// Admission batch, e.g. "2K26" (students only)
+  batch        String?
+  /// Current semester, 1-8 (students only)
+  semester     Int?
   role         UserRole @default(student)
   avatarUrl           String?  @map("avatar_url")
   hackerRankUsername  String?  @map("hackerrank_username")
@@ -126,6 +130,7 @@ model Profile {
 
   @@index([department])
   @@index([section])
+  @@index([batch])
   @@index([role])
   @@index([totalScore(sort: Desc)])
   @@map("profiles")
@@ -273,7 +278,9 @@ model Assignment {
   dueDate     DateTime?        @map("due_date") @db.Timestamptz
   status      AssignmentStatus @default(draft)
   targetDepartment String?     @map("target_department")
+  targetBatch   String?        @map("target_batch")
   targetSection String?        @map("target_section")
+  targetSemester Int?          @map("target_semester")
   pdfUrl      String?          @map("pdf_url") // URL to PDF file in Supabase Storage
   pdfFileName String?          @map("pdf_file_name")
   createdById String           @map("created_by") @db.Uuid
@@ -539,7 +546,9 @@ model DiscussionThread {
   content          String   @db.Text
   createdById      String   @map("created_by") @db.Uuid
   targetDepartment String?  @map("target_department")
+  targetBatch      String?  @map("target_batch")
   targetSection    String?  @map("target_section")
+  targetSemester   Int?     @map("target_semester")
   isPinned         Boolean  @default(false) @map("is_pinned")
   isClosed         Boolean  @default(false) @map("is_closed")
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz

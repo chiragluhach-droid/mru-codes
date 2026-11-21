@@ -270,10 +270,10 @@ export function TeacherHackerRankStats() {
             </Select>
             <Select value={sectionFilter} onValueChange={setSectionFilter}>
               <SelectTrigger className="sm:w-[140px]">
-                <SelectValue placeholder="All Batch/Sections" />
+                <SelectValue placeholder="All Sections" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Batch/Sections</SelectItem>
+                <SelectItem value="all">All Sections</SelectItem>
                 {sections.map((sec) => (
                   <SelectItem key={sec} value={sec!}>
                     {sec}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProfile } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { studentClassFilter } from "@/lib/class-targeting";
 import type { Prisma } from "@prisma/client";
 
 // GET /api/analytics/teacher - Get performance analytics for all students and sections
@@ -22,13 +23,8 @@ export async function GET(request: NextRequest) {
       role: "student",
     };
 
-    if (department) {
-      studentsQuery.department = department;
-    }
-
-    if (section) {
-      studentsQuery.section = section;
-    }
+    Object.assign(studentsQuery, studentClassFilter(searchParams));
+    const batch = searchParams.get("batch")?.trim() || null;
 
     if (studentId) {
       studentsQuery.id = studentId;
@@ -42,7 +38,9 @@ export async function GET(request: NextRequest) {
         email: true,
         rollNumber: true,
         department: true,
+        batch: true,
         section: true,
+        semester: true,
         avatarUrl: true,
         totalScore: true,
         quizzesTaken: true,
@@ -291,9 +289,19 @@ export async function GET(request: NextRequest) {
         role: "student",
         section: { not: null },
         ...(department ? { department } : {}),
+        ...(batch ? { batch } : {}),
       },
       select: { section: true },
       distinct: ["section"],
+      orderBy: { section: "asc" },
+    });
+
+    // Batches that have students (for the Batch filter), newest first
+    const batches = await prisma.profile.findMany({
+      where: { role: "student", batch: { not: null }, ...(department ? { department } : {}) },
+      select: { batch: true },
+      distinct: ["batch"],
+      orderBy: { batch: "desc" },
     });
 
     // Calculate section averages (teacher-scoped participations) if section filter is not applied
@@ -308,6 +316,7 @@ export async function GET(request: NextRequest) {
               role: "student",
               section: sec,
               ...(department ? { department } : {}),
+              ...(batch ? { batch } : {}),
             },
             select: { id: true },
           });
@@ -353,6 +362,7 @@ export async function GET(request: NextRequest) {
       quizzes,
       departments: departments.map((d) => d.department).filter(Boolean),
       sections: sections.map((s) => s.section).filter(Boolean),
+      batches: batches.map((b) => b.batch).filter(Boolean),
       sectionStats,
     });
   } catch (error) {

@@ -30,7 +30,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
-import { formatDepartmentSection } from "@/lib/departments";
+import { formatClass } from "@/lib/departments";
 
 interface Submission {
   id: string;
@@ -45,7 +45,10 @@ interface Submission {
     fullName: string;
     email: string;
     rollNumber: string | null;
+    department?: string | null;
+    batch?: string | null;
     section: string | null;
+    semester?: number | null;
     avatarUrl: string | null;
   };
 }
@@ -273,10 +276,7 @@ export default function SubmissionsPage() {
                           <>
                             <span>•</span>
                             <span>
-                              {formatDepartmentSection(
-                                submission.student.department ?? null,
-                                submission.student.section ?? null
-                              )}
+                              {formatClass(submission.student)}
                             </span>
                           </>
                         )}

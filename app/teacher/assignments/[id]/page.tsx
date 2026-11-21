@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { formatDepartmentSection } from "@/lib/departments";
+import { formatTarget } from "@/lib/departments";
 import { EditTargetClassDialog } from "./edit-target-class-dialog";
 import { EditAssignmentScheduleDialog } from "./edit-assignment-schedule-dialog";
 
@@ -132,7 +132,9 @@ export default async function AssignmentDetailPage({
           <EditTargetClassDialog
             assignmentId={assignment.id}
             targetDepartment={assignment.targetDepartment}
+            targetBatch={assignment.targetBatch}
             targetSection={assignment.targetSection}
+            targetSemester={assignment.targetSemester}
           />
           {getStatusBadge(assignment.status)}
         </div>
@@ -202,10 +204,7 @@ export default async function AssignmentDetailPage({
                     Target Class
                   </p>
                   <Badge variant="outline">
-                    {formatDepartmentSection(
-                      assignment.targetDepartment,
-                      assignment.targetSection
-                    )}
+                    {formatTarget(assignment)}
                   </Badge>
                 </div>
               </div>

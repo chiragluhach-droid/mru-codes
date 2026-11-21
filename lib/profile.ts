@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import type { User } from "@supabase/supabase-js";
 import { facultyName, roleForEmail } from "@/lib/faculty";
-import { normalizeBatchSection } from "@/lib/departments";
+import { inferBatch, isValidBatch, isValidSection, parseSemester } from "@/lib/departments";
 import { isAllowedStudentEmail } from "@/lib/student-allowlist";
 
 function pickString(value: unknown): string | null {
@@ -30,7 +30,11 @@ export async function getOrCreateProfileForSupabaseUser(user: User) {
   const fullName = facultyName(email) || getNameFromMetadata(meta, user.email);
   const rollNumber = pickString(meta?.roll_number) || pickString(meta?.rollNumber);
   const department = pickString(meta?.department);
-  const section = pickString(meta?.section) ? normalizeBatchSection(pickString(meta?.section)) : null;
+  const sectionRaw = pickString(meta?.section)?.toUpperCase();
+  const section = isValidSection(sectionRaw) ? sectionRaw : null;
+  const batchRaw = pickString(meta?.batch)?.toUpperCase();
+  const batch = isValidBatch(batchRaw) ? batchRaw! : inferBatch(email, rollNumber);
+  const semester = parseSemester(meta?.semester);
   // The role is never taken from signup metadata: only emails on the faculty
   // list are teachers (see lib/faculty.ts).
   const role = roleForEmail(email);
@@ -57,6 +61,7 @@ export async function getOrCreateProfileForSupabaseUser(user: User) {
       rollNumber,
       department,
       section,
+      ...(role === "student" ? { batch, semester } : {}),
       role,
     },
   });

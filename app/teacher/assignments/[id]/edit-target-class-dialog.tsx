@@ -13,56 +13,43 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import {
-  BATCH_SECTION_FORMAT_MESSAGE,
-  BATCH_SECTION_LABEL,
-  DEPARTMENT_OPTIONS,
-  departmentRequiresSection,
-  isValidBatchSection,
-  type Department,
-} from "@/lib/departments";
-import { BatchSectionInput } from "@/components/batch-section-input";
+  ClassTargetFields,
+  classTargetBody,
+  classTargetError,
+  type ClassTargetValue,
+} from "@/components/class-fields";
 import toast from "react-hot-toast";
 
 interface EditTargetClassDialogProps {
   assignmentId: string;
   targetDepartment: string | null;
+  targetBatch: string | null;
   targetSection: string | null;
+  targetSemester: number | null;
 }
 
 export function EditTargetClassDialog({
   assignmentId,
   targetDepartment,
+  targetBatch,
   targetSection,
+  targetSemester,
 }: EditTargetClassDialogProps) {
   const router = useRouter();
+  const fromProps = (): ClassTargetValue => ({
+    department: targetDepartment ?? "",
+    batch: targetBatch ?? "",
+    section: targetSection ?? "",
+    semester: targetSemester ? String(targetSemester) : "",
+  });
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [department, setDepartment] = useState(targetDepartment ?? "");
-  const [section, setSection] = useState(targetSection ?? "");
-
-  const requiresSection = departmentRequiresSection(department as Department);
-
-  const resetStateFromProps = () => {
-    setDepartment(targetDepartment ?? "");
-    setSection(targetSection ?? "");
-  };
+  const [target, setTarget] = useState<ClassTargetValue>(fromProps);
 
   const handleSave = async () => {
-    if (!department) {
-      toast.error("Please select target department");
-      return;
-    }
-
-    if (requiresSection && !isValidBatchSection(section)) {
-      toast.error(BATCH_SECTION_FORMAT_MESSAGE);
+    const error = classTargetError(target);
+    if (error) {
+      toast.error(error);
       return;
     }
 
@@ -70,27 +57,20 @@ export function EditTargetClassDialog({
       setSaving(true);
       const response = await fetch(`/api/assignments/${assignmentId}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          targetDepartment: department,
-          targetSection: requiresSection ? section : null,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(classTargetBody(target)),
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update target class");
+        const data = await response.json();
+        throw new Error(data.error || "Failed to update target class");
       }
 
-      toast.success("Target class updated successfully");
+      toast.success("Target class updated");
       setOpen(false);
       router.refresh();
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update target class"
-      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update target class");
     } finally {
       setSaving(false);
     }
@@ -101,9 +81,7 @@ export function EditTargetClassDialog({
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
-        if (!nextOpen) {
-          resetStateFromProps();
-        }
+        if (!nextOpen) setTarget(fromProps());
       }}
     >
       <DialogTrigger asChild>
@@ -113,58 +91,19 @@ export function EditTargetClassDialog({
         </Button>
       </DialogTrigger>
 
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Edit Target Class</DialogTitle>
           <DialogDescription>
-            Update the department and batch/section who can view this assignment.
+            Choose the department, batch, section and semester who can see this assignment.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="targetDepartment">Target Department</Label>
-            <Select
-              value={department}
-              onValueChange={(value) => {
-                setDepartment(value);
-                if (!departmentRequiresSection(value as Department)) {
-                  setSection("");
-                }
-              }}
-              disabled={saving}
-            >
-              <SelectTrigger id="targetDepartment">
-                <SelectValue placeholder="Select department" />
-              </SelectTrigger>
-              <SelectContent>
-                {DEPARTMENT_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {requiresSection && (
-            <div className="space-y-2">
-              <Label htmlFor="targetSection">Target {BATCH_SECTION_LABEL}</Label>
-              <BatchSectionInput
-                id="targetSection"
-                value={section}
-                onChange={setSection}
-                disabled={saving}
-              />
-            </div>
-          )}
+          <ClassTargetFields value={target} onChange={setTarget} disabled={saving} idPrefix="edit-target" />
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={saving}
-            >
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={saving}>

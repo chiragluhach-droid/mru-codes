@@ -19,6 +19,8 @@ export interface UserProfile {
   rollNumber: string | null;
   department: string | null;
   section: string | null;
+  batch: string | null;
+  semester: number | null;
   role: "student" | "teacher";
   avatarUrl: string | null;
   totalScore: number;

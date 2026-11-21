@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getProfile } from "@/lib/supabase/server";
 import prisma from "@/lib/prisma";
+import { formatClass } from "@/lib/departments";
 
 // GET: Get quiz results grouped by section
 export async function GET(
@@ -55,6 +56,7 @@ export async function GET(
                 fullName: true,
                 rollNumber: true,
                 section: true,
+                batch: true,
                 department: true,
                 email: true,
               },
@@ -109,8 +111,13 @@ export async function GET(
     for (const session of sessions) {
       for (const participant of session.participants) {
         const student = participant.student;
-        const sectionKey = student.section || "No Batch/Section";
-        const department = student.department || null;
+        // Group by department + batch + section so e.g. CSE 2K25 A and CSE 2K26 A
+        // stay separate. The label doubles as the group's unique key.
+        const sectionKey =
+          student.department || student.batch || student.section
+            ? formatClass({ department: student.department, batch: student.batch, section: student.section })
+            : "No class set";
+        const department = null;
 
         // Get all submissions for this student in this session
         const studentSubmissions = session.submissions.filter(

@@ -1,31 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProfile } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { hasClassAccess, type ClassTarget, type StudentClass } from "@/lib/class-targeting";
 
+/** Teachers see every thread; students only threads targeted at their class. */
 function hasThreadAccess(
-  thread: { targetDepartment: string | null; targetSection: string | null },
-  profile: { role: string; department: string | null; section: string | null }
+  thread: Partial<ClassTarget>,
+  profile: StudentClass & { role: string }
 ) {
-  if (profile.role !== "student") {
-    return true;
-  }
-
-  if (!thread.targetDepartment) {
-    return true;
-  }
-
-  const studentDepartment = profile.department?.trim() || null;
-  const studentSection = profile.section?.trim() || null;
-
-  if (!studentDepartment || studentDepartment !== thread.targetDepartment) {
-    return false;
-  }
-
-  if (!thread.targetSection) {
-    return true;
-  }
-
-  return studentSection === thread.targetSection;
+  return profile.role !== "student" || hasClassAccess(thread, profile);
 }
 
 export async function GET(

@@ -39,16 +39,14 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import toast from "react-hot-toast";
-import { BatchSectionInput } from "@/components/batch-section-input";
+import { formatClass } from "@/lib/departments";
 import {
-  BATCH_SECTION_FORMAT_MESSAGE,
-  BATCH_SECTION_LABEL,
-  DEPARTMENT_OPTIONS,
-  departmentRequiresSection,
-  isValidBatchSection,
-  formatDepartmentSection,
-  type Department,
-} from "@/lib/departments";
+  ClassTargetFields,
+  EMPTY_CLASS_TARGET,
+  classTargetBody,
+  classTargetError,
+  type ClassTargetValue,
+} from "@/components/class-fields";
 
 type Role = "student" | "teacher";
 
@@ -59,7 +57,9 @@ interface Thread {
   isPinned: boolean;
   isClosed: boolean;
   targetDepartment: string | null;
+  targetBatch: string | null;
   targetSection: string | null;
+  targetSemester: number | null;
   createdAt: string;
   updatedAt: string;
   _count: {
@@ -121,34 +121,19 @@ export function DiscussionBoard({
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [messageText, setMessageText] = useState("");
 
-  const [createForm, setCreateForm] = useState({
-    title: "",
-    content: "",
-    targetDepartment: initialDepartment ?? "",
-    targetSection: initialSection ?? "",
-  });
+  const [createForm, setCreateForm] = useState({ title: "", content: "" });
+  const [target, setTarget] = useState<ClassTargetValue>(EMPTY_CLASS_TARGET);
 
   const activeThread = useMemo(
     () => threads.find((thread) => thread.id === activeThreadId) ?? null,
     [threads, activeThreadId]
   );
 
-  const requiresSection = departmentRequiresSection(
-    createForm.targetDepartment as Department
-  );
-
   const fetchThreads = async () => {
     try {
       setLoadingThreads(true);
-      const params = new URLSearchParams();
-      if (role === "teacher" && createForm.targetDepartment) {
-        params.set("department", createForm.targetDepartment);
-      }
-      if (role === "teacher" && isValidBatchSection(createForm.targetSection)) {
-        params.set("section", createForm.targetSection);
-      }
-      const query = params.toString();
-      const response = await fetch(`/api/discussions${query ? `?${query}` : ""}`);
+      // Students get their class's threads; teachers see every thread.
+      const response = await fetch("/api/discussions");
       if (!response.ok) {
         throw new Error("Failed to fetch discussions");
       }
@@ -208,12 +193,9 @@ export function DiscussionBoard({
       toast.error("Title and content are required");
       return;
     }
-    if (role === "teacher" && !createForm.targetDepartment) {
-      toast.error("Please select target department");
-      return;
-    }
-    if (role === "teacher" && requiresSection && !isValidBatchSection(createForm.targetSection)) {
-      toast.error(BATCH_SECTION_FORMAT_MESSAGE);
+    const targetError = role === "teacher" ? classTargetError(target) : null;
+    if (targetError) {
+      toast.error(targetError);
       return;
     }
 
@@ -227,12 +209,7 @@ export function DiscussionBoard({
         body: JSON.stringify({
           title,
           content,
-          ...(role === "teacher"
-            ? {
-                targetDepartment: createForm.targetDepartment,
-                targetSection: requiresSection ? createForm.targetSection : null,
-              }
-            : {}),
+          ...(role === "teacher" ? classTargetBody(target) : {}),
         }),
       });
       if (!response.ok) {
@@ -371,47 +348,7 @@ export function DiscussionBoard({
               </div>
 
               {role === "teacher" && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="discussion-department">Target Department</Label>
-                    <Select
-                      value={createForm.targetDepartment}
-                      onValueChange={(value) =>
-                        setCreateForm((prev) => ({
-                          ...prev,
-                          targetDepartment: value,
-                          targetSection: departmentRequiresSection(value as Department)
-                            ? prev.targetSection
-                            : "",
-                        }))
-                      }
-                    >
-                      <SelectTrigger id="discussion-department">
-                        <SelectValue placeholder="Select department" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {DEPARTMENT_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {requiresSection && (
-                    <div className="space-y-2">
-                      <Label htmlFor="discussion-section">Target {BATCH_SECTION_LABEL}</Label>
-                      <BatchSectionInput
-                        id="discussion-section"
-                        value={createForm.targetSection}
-                        onChange={(value) =>
-                          setCreateForm((prev) => ({ ...prev, targetSection: value }))
-                        }
-                      />
-                    </div>
-                  )}
-                </div>
+                <ClassTargetFields value={target} onChange={setTarget} idPrefix="discussion" />
               )}
 
               <div className="flex justify-end">
@@ -479,7 +416,13 @@ export function DiscussionBoard({
                   </div>
                   {role === "teacher" && (
                     <div className="mt-2 text-[11px] text-muted-foreground">
-                      Class: {formatDepartmentSection(thread.targetDepartment, thread.targetSection)}
+                      Class:{" "}
+                      {formatClass({
+                        department: thread.targetDepartment,
+                        batch: thread.targetBatch,
+                        section: thread.targetSection,
+                        semester: thread.targetSemester,
+                      })}
                     </div>
                   )}
                 </button>
@@ -528,10 +471,12 @@ export function DiscussionBoard({
                   <span>•</span>
                   <span>
                     Class:{" "}
-                    {formatDepartmentSection(
-                      activeThread.targetDepartment,
-                      activeThread.targetSection
-                    )}
+                    {formatClass({
+                      department: activeThread.targetDepartment,
+                      batch: activeThread.targetBatch,
+                      section: activeThread.targetSection,
+                      semester: activeThread.targetSemester,
+                    })}
                   </span>
                 </div>
 

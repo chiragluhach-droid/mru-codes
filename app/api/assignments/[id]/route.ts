@@ -1,35 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProfile } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import {
-  BATCH_SECTION_FORMAT_MESSAGE,
-  departmentRequiresSection,
-  isValidBatchSection,
-  normalizeBatchSection,
-  type Department,
-} from "@/lib/departments";
-
-function hasClassAccess(
-  assignment: { targetDepartment: string | null; targetSection: string | null },
-  profile: { department: string | null; section: string | null }
-) {
-  if (!assignment.targetDepartment) {
-    return true;
-  }
-
-  const studentDepartment = profile.department?.trim() || null;
-  const studentSection = profile.section?.trim() || null;
-
-  if (!studentDepartment || studentDepartment !== assignment.targetDepartment) {
-    return false;
-  }
-
-  if (!assignment.targetSection) {
-    return true;
-  }
-
-  return studentSection === assignment.targetSection;
-}
+import { hasClassAccess, parseClassTarget, type ClassTarget } from "@/lib/class-targeting";
 
 // GET /api/assignments/[id] - Get a specific assignment
 export async function GET(
@@ -138,34 +110,16 @@ export async function PATCH(
       status: assignmentStatus,
       pdfUrl,
       pdfFileName,
-      targetDepartment,
-      targetSection,
     } = body;
 
-    const normalizedDepartment =
-      typeof targetDepartment === "string" ? targetDepartment.trim() : undefined;
-    const normalizedSection =
-      typeof targetSection === "string" && targetSection.trim().length > 0
-        ? normalizeBatchSection(targetSection)
-        : null;
-
-    if (normalizedDepartment !== undefined) {
-      if (!normalizedDepartment) {
-        return NextResponse.json(
-          { error: "Target department cannot be empty" },
-          { status: 400 }
-        );
+    // The target class is only changed when the request includes it.
+    let target: ClassTarget | undefined;
+    if (body.targetDepartment !== undefined) {
+      const parsedTarget = parseClassTarget(body);
+      if ("error" in parsedTarget) {
+        return NextResponse.json({ error: parsedTarget.error }, { status: 400 });
       }
-
-      if (
-        departmentRequiresSection(normalizedDepartment as Department) &&
-        !isValidBatchSection(normalizedSection)
-      ) {
-        return NextResponse.json(
-          { error: `Target batch/section is required. ${BATCH_SECTION_FORMAT_MESSAGE}` },
-          { status: 400 }
-        );
-      }
+      target = parsedTarget.target;
     }
 
     const updatedAssignment = await prisma.assignment.update({
@@ -178,12 +132,7 @@ export async function PATCH(
         ...(maxPoints !== undefined && { maxPoints }),
         ...(dueDate !== undefined && { dueDate: dueDate ? new Date(dueDate) : null }),
         ...(assignmentStatus !== undefined && { status: assignmentStatus }),
-        ...(normalizedDepartment !== undefined && {
-          targetDepartment: normalizedDepartment,
-          targetSection: departmentRequiresSection(normalizedDepartment as Department)
-            ? normalizedSection
-            : null,
-        }),
+        ...(target ?? {}),
         ...(pdfUrl !== undefined && { pdfUrl }),
         ...(pdfFileName !== undefined && { pdfFileName }),
       },

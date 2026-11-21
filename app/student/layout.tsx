@@ -5,7 +5,7 @@ import { DashboardHeader } from "@/components/dashboard/header";
 import { MobileNav } from "@/components/dashboard/mobile-nav";
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
-import { isStudentDepartment, isValidBatchSection } from "@/lib/departments";
+import { isStudentDepartment, isValidBatch, isValidSection, isValidSemester } from "@/lib/departments";
 
 export default async function StudentLayout({
   children,
@@ -37,10 +37,14 @@ export default async function StudentLayout({
     updated_at: profile.updatedAt.toISOString(),
   };
 
-  // Accounts from before the department list changed (e.g. CSTI, or a bare "A"
-  // section) need a current department and Batch/Section like "2A".
+  // Teachers target work by department, batch, section and semester, so a
+  // student missing any of them (e.g. accounts from before batches existed)
+  // wouldn't see their class's assignments.
   const needsClassUpdate =
-    !isStudentDepartment(profile.department) || !isValidBatchSection(profile.section);
+    !isStudentDepartment(profile.department) ||
+    !isValidBatch(profile.batch) ||
+    !isValidSection(profile.section) ||
+    !isValidSemester(profile.semester);
 
   return (
     <div className="h-dvh bg-background flex flex-col overflow-hidden">
@@ -49,8 +53,8 @@ export default async function StudentLayout({
         <div className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm flex items-center justify-center gap-2 text-center">
           <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <span>
-            Please update your department and Batch/Section (e.g. 2A) so you see your class&apos;s
-            assignments.{" "}
+            Please complete your department, batch, semester and section so you see your class&apos;s
+            assignments and quizzes.{" "}
             <Link href="/student/settings" className="font-medium text-primary underline-offset-4 hover:underline">
               Update now
             </Link>
