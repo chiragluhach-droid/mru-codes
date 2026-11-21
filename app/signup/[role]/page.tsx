@@ -6,7 +6,7 @@ export function generateStaticParams() {
   return AUTH_ROLES.map((role) => ({ role }));
 }
 
-/** /signup/student (2026 batch list) and /signup/teacher (faculty list). */
+/** /signup/student (university email, open batches) and /signup/teacher (faculty list). */
 export default async function RoleSignupPage({
   params,
 }: {

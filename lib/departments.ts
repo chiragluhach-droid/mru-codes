@@ -34,8 +34,8 @@ export type Section = (typeof SECTION_OPTIONS)[number];
 
 /** Batches teachers can target (newest first). */
 export const BATCH_OPTIONS = ["2K26", "2K25", "2K24", "2K23", "2K22"] as const;
-/** Batches that may register right now (see lib/student-allowlist.ts). */
-export const SIGNUP_BATCH_OPTIONS = ["2K26"] as const;
+/** Batches that may register (see lib/student-allowlist.ts). */
+export const SIGNUP_BATCH_OPTIONS = BATCH_OPTIONS;
 
 export const SEMESTER_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 

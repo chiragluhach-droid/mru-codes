@@ -29,6 +29,7 @@ import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 import {
   SIGNUP_BATCH_OPTIONS,
+  inferBatch,
   departmentOptionsForRole,
   isValidSection,
   parseSemester,
@@ -52,7 +53,8 @@ import {
 
 /**
  * Which account type an email may create, or a pop-up explaining why not.
- * Teachers are exactly the faculty list; students are the 2026-batch list.
+ * Teachers are exactly the faculty list; students need a university email
+ * from an open batch (lib/student-allowlist.ts).
  */
 function signupNotice(role: AuthRole, email: string): AuthNotice | null {
   if (role === "teacher") {
@@ -73,7 +75,7 @@ function signupNotice(role: AuthRole, email: string): AuthNotice | null {
     };
   }
   if (!isAllowedStudentEmail(email)) {
-    return { title: "Email not on the 2026 batch list", description: STUDENT_SIGNUP_CLOSED_MESSAGE };
+    return { title: "Use your university email", description: STUDENT_SIGNUP_CLOSED_MESSAGE };
   }
   return null;
 }
@@ -99,6 +101,16 @@ const signupSchema = z
     if (data.role !== "student") return;
     if (!(SIGNUP_BATCH_OPTIONS as readonly string[]).includes(data.batch ?? "")) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["batch"], message: "Select your batch" });
+    } else {
+      // The batch must match the year in the university email (name25@ → 2K25).
+      const emailBatch = inferBatch(data.email);
+      if (emailBatch && emailBatch !== data.batch) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["batch"],
+          message: `Your email is from batch ${emailBatch}`,
+        });
+      }
     }
     if (parseSemester(data.semester) === null) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["semester"], message: "Select your semester" });
@@ -162,7 +174,7 @@ export function SignupForm({ role }: { role: AuthRole }) {
       role,
       department: "",
       section: "",
-      batch: SIGNUP_BATCH_OPTIONS[0],
+      batch: "",
       semester: "",
     },
   });
@@ -172,6 +184,15 @@ export function SignupForm({ role }: { role: AuthRole }) {
     const email = takeRememberedEmail();
     if (email) setValue("email", email, { shouldValidate: true });
   }, [setValue]);
+
+  // Pick the batch from the university email as it's typed (name25@ → 2K25).
+  const typedEmail = watch("email");
+  useEffect(() => {
+    const emailBatch = inferBatch(typedEmail);
+    if (role === "student" && emailBatch && (SIGNUP_BATCH_OPTIONS as readonly string[]).includes(emailBatch)) {
+      setValue("batch", emailBatch, { shouldValidate: true });
+    }
+  }, [typedEmail, role, setValue]);
 
   const selectedDepartment = watch("department");
   const departmentOptions = departmentOptionsForRole(role);
@@ -320,7 +341,7 @@ export function SignupForm({ role }: { role: AuthRole }) {
               <p className="text-xs text-muted-foreground">
                 {isTeacher
                   ? "Use your official faculty email."
-                  : "Use your university email. Only 2026 batch students can sign up."}
+                  : "Use your university email (e.g. name25@mru.ac.in)."}
               </p>
               {errors.email && (
                 <p className="text-sm text-destructive">{errors.email.message}</p>

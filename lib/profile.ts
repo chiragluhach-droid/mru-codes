@@ -19,7 +19,7 @@ function getNameFromMetadata(meta: Record<string, unknown> | null | undefined, e
 
 /**
  * Returns the user's profile, creating it on first login. Returns null when a
- * new student is not on the 2026-batch list: they cannot get an account, even
+ * new student doesn't have a university email from an open batch: they cannot get an account, even
  * if they created an auth user by calling Supabase directly. Students who
  * already have a profile keep it.
  */
@@ -33,7 +33,8 @@ export async function getOrCreateProfileForSupabaseUser(user: User) {
   const sectionRaw = pickString(meta?.section)?.toUpperCase();
   const section = isValidSection(sectionRaw) ? sectionRaw : null;
   const batchRaw = pickString(meta?.batch)?.toUpperCase();
-  const batch = isValidBatch(batchRaw) ? batchRaw! : inferBatch(email, rollNumber);
+  // The year in the university email is authoritative; signup metadata is a fallback.
+  const batch = inferBatch(email) ?? (isValidBatch(batchRaw) ? batchRaw! : inferBatch(null, rollNumber));
   const semester = parseSemester(meta?.semester);
   // The role is never taken from signup metadata: only emails on the faculty
   // list are teachers (see lib/faculty.ts).
