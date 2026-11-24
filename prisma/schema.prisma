@@ -127,6 +127,8 @@ model Profile {
   modulesCreated           LearningModule[]   @relation("ModuleCreator")
   lessonProgress           LessonProgress[]
   moduleBadges             ModuleBadge[]
+  examsCreated             Exam[]             @relation("ExamCreator")
+  examAttempts             ExamAttempt[]
 
   @@index([department])
   @@index([section])
@@ -671,4 +673,146 @@ model ModuleBadge {
   @@unique([moduleId, studentId])
   @@index([studentId])
   @@map("module_badges")
+}
+
+enum ExamStatus {
+  draft
+  published
+  closed
+}
+
+enum ExamQuestionType {
+  mcq
+  programming
+}
+
+enum ExamAttemptStatus {
+  in_progress
+  submitted
+}
+
+/// A timed exam with MCQ and programming questions, targeted at a class.
+model Exam {
+  id               String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title            String
+  instructions     String?    @db.Text
+  /// Minutes each student gets once they start
+  durationMinutes  Int        @map("duration_minutes")
+  /// Window in which students can start (and must finish)
+  startsAt         DateTime   @map("starts_at") @db.Timestamptz
+  endsAt           DateTime   @map("ends_at") @db.Timestamptz
+  status           ExamStatus @default(draft)
+  /// Students see their score and test results after submitting
+  showResults      Boolean    @default(true) @map("show_results")
+  targetDepartment String?    @map("target_department")
+  targetBatch      String?    @map("target_batch")
+  targetSection    String?    @map("target_section")
+  targetSemester   Int?       @map("target_semester")
+  createdById      String     @map("created_by") @db.Uuid
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  createdBy Profile        @relation("ExamCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  questions ExamQuestion[]
+  attempts  ExamAttempt[]
+
+  @@index([status])
+  @@index([createdById])
+  @@index([targetDepartment, targetBatch])
+  @@map("exams")
+}
+
+model ExamQuestion {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  examId      String           @map("exam_id") @db.Uuid
+  type        ExamQuestionType
+  position    Int
+  title       String
+  /// Question text (Markdown)
+  prompt      String           @db.Text
+  points      Int              @default(10)
+  /// MCQ: [{ id, text }]
+  options     Json?
+  /// MCQ: ids of the correct options (several = multiple-answer question)
+  correctOptionIds Json?       @map("correct_option_ids")
+  /// Programming: allowed languages, e.g. ["c", "cpp", "java"]
+  languages   Json?
+  /// Programming: { c?: string, cpp?: string, java?: string }
+  starterCode Json?            @map("starter_code")
+  timeLimitMs Int              @default(2000) @map("time_limit_ms")
+  memoryLimitMb Int            @default(128) @map("memory_limit_mb")
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  exam      Exam           @relation(fields: [examId], references: [id], onDelete: Cascade)
+  testCases ExamTestCase[]
+  answers   ExamAnswer[]
+
+  @@index([examId, position])
+  @@map("exam_questions")
+}
+
+model ExamTestCase {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionId     String   @map("question_id") @db.Uuid
+  position       Int
+  input          String   @db.Text
+  expectedOutput String   @map("expected_output") @db.Text
+  /// Sample tests are shown to students; hidden ones only count for grading
+  isSample       Boolean  @default(false) @map("is_sample")
+  weight         Int      @default(1)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  question ExamQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId, position])
+  @@map("exam_test_cases")
+}
+
+model ExamAttempt {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  examId      String            @map("exam_id") @db.Uuid
+  studentId   String            @map("student_id") @db.Uuid
+  status      ExamAttemptStatus @default(in_progress)
+  startedAt   DateTime          @default(now()) @map("started_at") @db.Timestamptz
+  /// min(startedAt + duration, exam.endsAt)
+  deadline    DateTime          @db.Timestamptz
+  submittedAt DateTime?         @map("submitted_at") @db.Timestamptz
+  score       Float             @default(0)
+  maxScore    Float             @default(0) @map("max_score")
+  /// Times the student left the exam tab/window
+  tabSwitches Int               @default(0) @map("tab_switches")
+  runCount    Int               @default(0) @map("run_count")
+  autoSubmitted Boolean         @default(false) @map("auto_submitted")
+
+  exam    Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  student Profile      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  answers ExamAnswer[]
+
+  @@unique([examId, studentId])
+  @@index([studentId])
+  @@map("exam_attempts")
+}
+
+model ExamAnswer {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attemptId         String    @map("attempt_id") @db.Uuid
+  questionId        String    @map("question_id") @db.Uuid
+  selectedOptionIds Json?     @map("selected_option_ids")
+  code              String?   @db.Text
+  language          String?
+  score             Float     @default(0)
+  /// Programming: [{ testCaseId, passed, status, timeMs, memoryKb }] from the last graded submit
+  testResults       Json?     @map("test_results")
+  /// Code that was graded; if `code` differs, the answer is re-graded on finish
+  gradedCode        String?   @map("graded_code") @db.Text
+  gradedLanguage    String?   @map("graded_language")
+  gradedAt          DateTime? @map("graded_at") @db.Timestamptz
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  attempt  ExamAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question ExamQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+  @@map("exam_answers")
 }

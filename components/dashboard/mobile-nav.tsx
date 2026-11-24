@@ -24,6 +24,7 @@ import {
   Eye,
   PlusCircle,
   Film,
+  ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +38,7 @@ const studentNav = [
   { href: "/student/quiz/join", label: "Quiz", icon: Zap },
   { href: "/student/study-recommendations", label: "Tips", icon: Lightbulb },
   { href: "/student/quiz-history", label: "History", icon: Clock },
+  { href: "/student/exams", label: "Exams", icon: ClipboardCheck },
   { href: "/student/assignments", label: "Tasks", icon: FileText },
   { href: "/student/discussions", label: "Discuss", icon: MessageSquare },
   { href: "/student/performance", label: "Performance", icon: BarChart3 },
@@ -51,6 +53,7 @@ const teacherNav = [
   { href: "/teacher/question-bank", label: "Bank", icon: Database },
   { href: "/teacher/ide", label: "IDE", icon: Code2 },
   { href: "/teacher/cheating-detection", label: "Security", icon: Shield },
+  { href: "/teacher/exams", label: "Exams", icon: ClipboardCheck },
   { href: "/teacher/assignments", label: "Tasks", icon: FileText },
   { href: "/teacher/discussions", label: "Discuss", icon: MessageSquare },
   { href: "/teacher/performance", label: "Students", icon: Users },
